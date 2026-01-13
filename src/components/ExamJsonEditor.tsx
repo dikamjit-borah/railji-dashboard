@@ -5,24 +5,43 @@ import { ArrowLeft, Plus, Trash2, Copy, Check } from 'lucide-react'
 
 interface Question {
   ques: string
-  options: string[]
+  ques_hi: string
+  options: Array<{ en: string; hi: string }>
   correct: string
 }
 
 const DUMMY_EXAM_DATA: Question[] = [
   {
     ques: 'What is the capital of India?',
-    options: ['Mumbai', 'New Delhi', 'Bangalore', 'Kolkata'],
+    ques_hi: 'भारत की राजधानी क्या है?',
+    options: [
+      { en: 'Mumbai', hi: 'मुंबई' },
+      { en: 'New Delhi', hi: 'नई दिल्ली' },
+      { en: 'Bangalore', hi: 'बेंगलुरु' },
+      { en: 'Kolkata', hi: 'कोलकाता' },
+    ],
     correct: 'New Delhi',
   },
   {
     ques: 'What is 2 + 2?',
-    options: ['3', '4', '5', '6'],
+    ques_hi: '2 + 2 क्या है?',
+    options: [
+      { en: '3', hi: '3' },
+      { en: '4', hi: '4' },
+      { en: '5', hi: '5' },
+      { en: '6', hi: '6' },
+    ],
     correct: '4',
   },
   {
     ques: 'What is the largest planet in our solar system?',
-    options: ['Mars', 'Jupiter', 'Saturn', 'Venus'],
+    ques_hi: 'हमारे सौर मंडल का सबसे बड़ा ग्रह कौन सा है?',
+    options: [
+      { en: 'Mars', hi: 'मंगल' },
+      { en: 'Jupiter', hi: 'बृहस्पति' },
+      { en: 'Saturn', hi: 'शनि' },
+      { en: 'Venus', hi: 'शुक्र' },
+    ],
     correct: 'Jupiter',
   },
 ]
@@ -35,7 +54,13 @@ export function ExamJsonEditor({ onBack }: { readonly onBack: () => void }) {
   const addQuestion = () => {
     const newQuestion: Question = {
       ques: 'New Question',
-      options: ['Option A', 'Option B', 'Option C', 'Option D'],
+      ques_hi: 'नया प्रश्न',
+      options: [
+        { en: 'Option A', hi: 'विकल्प A' },
+        { en: 'Option B', hi: 'विकल्प B' },
+        { en: 'Option C', hi: 'विकल्प C' },
+        { en: 'Option D', hi: 'विकल्प D' },
+      ],
       correct: 'Option A',
     }
     setQuestions([...questions, newQuestion])
@@ -51,9 +76,9 @@ export function ExamJsonEditor({ onBack }: { readonly onBack: () => void }) {
     setQuestions(questions.filter((_, i) => i !== index))
   }
 
-  const updateOption = (qIndex: number, oIndex: number, value: string) => {
+  const updateOption = (qIndex: number, oIndex: number, lang: 'en' | 'hi', value: string) => {
     const updatedQuestion = { ...questions[qIndex] }
-    updatedQuestion.options[oIndex] = value
+    updatedQuestion.options[oIndex][lang] = value
     updateQuestion(qIndex, updatedQuestion)
   }
 
@@ -130,6 +155,9 @@ export function ExamJsonEditor({ onBack }: { readonly onBack: () => void }) {
                     <p className="font-semibold text-slate-950">
                       Q{qIndex + 1}: {question.ques}
                     </p>
+                    <p className="font-semibold text-slate-950 text-sm mt-1">
+                      {question.ques_hi}
+                    </p>
                     <p className="text-xs text-slate-600 mt-2">
                       Correct Answer:{' '}
                       <span className="font-medium text-green-700">
@@ -145,23 +173,43 @@ export function ExamJsonEditor({ onBack }: { readonly onBack: () => void }) {
                 {expandedIndex === qIndex && (
                   <div className="border-t border-slate-200 p-4 bg-slate-50 space-y-4">
                     {/* Question Text */}
-                    <div>
-                      <label
-                        htmlFor={`ques-${qIndex}`}
-                        className="block text-sm font-semibold text-slate-950 mb-2"
-                      >
-                        Question Text
-                      </label>
-                      <input
-                        id={`ques-${qIndex}`}
-                        type="text"
-                        value={question.ques}
-                        onChange={(e) => {
-                          const updated = { ...question, ques: e.target.value }
-                          updateQuestion(qIndex, updated)
-                        }}
-                        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-slate-950 focus:outline-none focus:border-slate-400"
-                      />
+                    <div className="space-y-3">
+                      <div>
+                        <label
+                          htmlFor={`ques-${qIndex}`}
+                          className="block text-sm font-semibold text-slate-950 mb-2"
+                        >
+                          Question Text (English)
+                        </label>
+                        <input
+                          id={`ques-${qIndex}`}
+                          type="text"
+                          value={question.ques}
+                          onChange={(e) => {
+                            const updated = { ...question, ques: e.target.value }
+                            updateQuestion(qIndex, updated)
+                          }}
+                          className="w-full px-3 py-2 border border-slate-200 rounded-lg text-slate-950 focus:outline-none focus:border-slate-400"
+                        />
+                      </div>
+                      <div>
+                        <label
+                          htmlFor={`ques-hi-${qIndex}`}
+                          className="block text-sm font-semibold text-slate-950 mb-2"
+                        >
+                          Question Text (Hindi)
+                        </label>
+                        <input
+                          id={`ques-hi-${qIndex}`}
+                          type="text"
+                          value={question.ques_hi}
+                          onChange={(e) => {
+                            const updated = { ...question, ques_hi: e.target.value }
+                            updateQuestion(qIndex, updated)
+                          }}
+                          className="w-full px-3 py-2 border border-slate-200 rounded-lg text-slate-950 focus:outline-none focus:border-slate-400"
+                        />
+                      </div>
                     </div>
 
                     {/* Options */}
@@ -169,32 +217,46 @@ export function ExamJsonEditor({ onBack }: { readonly onBack: () => void }) {
                       <label className="block text-sm font-semibold text-slate-950 mb-3">
                         Options
                       </label>
-                      <div className="space-y-2">
+                      <div className="space-y-3">
                         {question.options.map((option, oIndex) => (
                           <div
                             key={`o-${qIndex}-${oIndex}`}
-                            className={`flex items-center gap-3 p-3 rounded-lg border ${
-                              option === question.correct
+                            className={`p-3 rounded-lg border ${
+                              option.en === question.correct
                                 ? 'bg-green-50 border-green-300'
                                 : 'bg-white border-slate-200'
                             }`}
                           >
-                            <span className="text-sm font-semibold text-slate-500 w-6">
-                              {String.fromCodePoint(65 + oIndex)}.
-                            </span>
-                            <input
-                              type="text"
-                              value={option}
-                              onChange={(e) =>
-                                updateOption(qIndex, oIndex, e.target.value)
-                              }
-                              className="flex-1 bg-transparent border-none text-slate-950 focus:outline-none"
-                            />
-                            {option === question.correct && (
-                              <span className="text-xs font-semibold text-green-700 px-2 py-1 bg-green-100 rounded">
-                                Correct
+                            <div className="flex items-center gap-3 mb-2">
+                              <span className="text-sm font-semibold text-slate-500 w-6">
+                                {String.fromCodePoint(65 + oIndex)}.
                               </span>
-                            )}
+                              <input
+                                type="text"
+                                placeholder="English"
+                                value={option.en}
+                                onChange={(e) =>
+                                  updateOption(qIndex, oIndex, 'en', e.target.value)
+                                }
+                                className="flex-1 px-2 py-1 bg-white border border-slate-200 rounded text-slate-950 text-sm focus:outline-none focus:border-slate-400"
+                              />
+                              {option.en === question.correct && (
+                                <span className="text-xs font-semibold text-green-700 px-2 py-1 bg-green-100 rounded">
+                                  Correct
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-3 ml-8">
+                              <input
+                                type="text"
+                                placeholder="Hindi"
+                                value={option.hi}
+                                onChange={(e) =>
+                                  updateOption(qIndex, oIndex, 'hi', e.target.value)
+                                }
+                                className="flex-1 px-2 py-1 bg-white border border-slate-200 rounded text-slate-950 text-sm focus:outline-none focus:border-slate-400"
+                              />
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -221,8 +283,8 @@ export function ExamJsonEditor({ onBack }: { readonly onBack: () => void }) {
                         className="w-full px-3 py-2 border border-slate-200 rounded-lg text-slate-950 focus:outline-none focus:border-slate-400"
                       >
                         {question.options.map((option, i) => (
-                          <option key={`opt-${i}`} value={option}>
-                            {String.fromCodePoint(65 + i)}. {option}
+                          <option key={`opt-${i}`} value={option.en}>
+                            {String.fromCodePoint(65 + i)}. {option.en}
                           </option>
                         ))}
                       </select>
