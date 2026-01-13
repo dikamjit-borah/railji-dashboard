@@ -1,0 +1,86 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Typography hierarchy */
+@layer base {
+  body {
+    @apply text-slate-950 bg-slate-50;
+    font-feature-settings: "kern" 1;
+  }
+
+  h1 {
+    @apply text-3xl font-bold tracking-tight;
+  }
+
+  h2 {
+    @apply text-2xl font-semibold tracking-tight;
+  }
+
+  h3 {
+    @apply text-lg font-semibold;
+  }
+
+  p {
+    @apply text-base leading-relaxed;
+  }
+
+  /* Track divider - subtle railway element */
+  .track {
+    @apply bg-slate-200 h-px w-full;
+  }
+
+  .track-vertical {
+    @apply bg-slate-200 w-px h-full;
+  }
+
+  /* Station marker */
+  .station-marker {
+    @apply relative inline-flex items-center justify-center w-3 h-3 rounded-full bg-slate-900;
+  }
+
+  .station-marker::before {
+    content: '';
+    @apply absolute inset-0 rounded-full bg-slate-900 animate-ping;
+    animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+  }
+
+  /* Subtle transition */
+  @layer components {
+    .btn-minimal {
+      @apply px-3 py-2 text-sm font-medium transition-colors duration-200;
+    }
+
+    .btn-minimal-primary {
+      @apply btn-minimal text-slate-950 border border-slate-900 hover:bg-slate-900 hover:text-slate-50;
+    }
+
+    .btn-minimal-secondary {
+      @apply btn-minimal text-slate-700 hover:bg-slate-100;
+    }
+
+    .input-minimal {
+      @apply w-full px-3 py-2 border border-slate-300 text-slate-950 placeholder-slate-500 transition-colors focus:outline-none focus:border-slate-900 focus:ring-0 bg-white;
+    }
+
+    .table-minimal {
+      @apply w-full text-sm;
+    }
+
+    .table-minimal thead {
+      @apply border-b border-slate-200 text-slate-600 font-medium;
+    }
+
+    .table-minimal tbody tr {
+      @apply border-b border-slate-100 hover:bg-slate-50 transition-colors;
+    }
+
+    .table-minimal td {
+      @apply px-4 py-3 text-slate-700;
+    }
+
+    .table-minimal th {
+      @apply px-4 py-3 text-left font-semibold tracking-tight;
+    }
+  }
+}
