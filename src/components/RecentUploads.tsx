@@ -1,47 +1,49 @@
-import { Calendar, User, FileText } from 'lucide-react'
+import { FileText } from "lucide-react";
 
 interface Upload {
-  id: string
-  filename: string
-  uploadedBy: string
-  uploadedAt: string
-  examName: string
-  fileSize: string
+  id: string;
+  filename: string;
+  uploadedBy: string;
+  uploadedAt: string;
+  examName: string;
+  fileSize: string;
 }
 
 const uploads: Upload[] = [
   {
-    id: '1',
-    filename: 'NTPC_Mathematics_2024.pdf',
-    uploadedBy: 'Priya Sharma',
-    uploadedAt: '2 hours ago',
-    examName: 'RRB NTPC - Mathematics',
-    fileSize: '2.4 MB',
+    id: "1",
+    filename: "NTPC_Mathematics_2024.pdf",
+    uploadedBy: "Gurjit Ching",
+    uploadedAt: "2 hours ago",
+    examName: "RRB NTPC - Mathematics",
+    fileSize: "2.4 MB",
   },
   {
-    id: '2',
-    filename: 'GroupD_General_Awareness.pdf',
-    uploadedBy: 'Rajesh Kumar',
-    uploadedAt: '1 day ago',
-    examName: 'RRB Group D',
-    fileSize: '1.8 MB',
+    id: "2",
+    filename: "GroupD_General_Awareness.pdf",
+    uploadedBy: "Pramod Debnath",
+    uploadedAt: "1 day ago",
+    examName: "RRB Group D",
+    fileSize: "1.8 MB",
   },
   {
-    id: '3',
-    filename: 'Technician_Reasoning.pdf',
-    uploadedBy: 'Amit Patel',
-    uploadedAt: '3 days ago',
-    examName: 'Railways Technician',
-    fileSize: '3.1 MB',
+    id: "3",
+    filename: "Technician_Reasoning.pdf",
+    uploadedBy: "Amit Patel",
+    uploadedAt: "3 days ago",
+    examName: "Railways Technician",
+    fileSize: "3.1 MB",
   },
-]
+];
 
 export function RecentUploads() {
   return (
     <div className="bg-white border border-slate-200">
       <div className="px-6 py-6 border-b border-slate-100">
         <h2 className="text-lg font-semibold text-slate-950">Recent Uploads</h2>
-        <p className="text-sm text-slate-600 mt-1">Latest papers added to the system</p>
+        <p className="text-sm text-slate-600 mt-1">
+          Latest papers added to the system
+        </p>
       </div>
 
       <div className="overflow-x-auto">
@@ -84,5 +86,5 @@ export function RecentUploads() {
         </a>
       </div>
     </div>
-  )
+  );
 }

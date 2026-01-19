@@ -9,14 +9,14 @@ interface User {
 const users: User[] = [
   {
     id: '1',
-    name: 'Rajesh Kumar',
+    name: 'Pramod Debnath',
     role: 'admin',
     lastActive: 'now',
     status: 'online',
   },
   {
     id: '2',
-    name: 'Priya Sharma',
+    name: 'Gurjit Ching',
     role: 'examiner',
     lastActive: '5m ago',
     status: 'idle',

@@ -25,8 +25,30 @@ export function UploadSection() {
     answerKey: null,
   })
   const [isDragActive, setIsDragActive] = useState<string | null>(null)
+  const [selectedExamType, setSelectedExamType] = useState('')
+  const [selectedDepartment, setSelectedDepartment] = useState('')
+  const [selectedYear, setSelectedYear] = useState('')
   const [examName, setExamName] = useState('')
   const [selectedExamForEditing, setSelectedExamForEditing] = useState<number | null>(null)
+
+  const examTypes = [
+    'RRB NTPC',
+    'RRB Group D',
+    'RRB JE',
+    'RRB ALP',
+    'Indian Railways Technician',
+  ]
+
+  const departments = [
+    'General',
+    'Mathematics',
+    'General Awareness',
+    'Reasoning',
+    'English',
+  ]
+
+  const currentYear = new Date().getFullYear()
+  //const years = Array.from({ length: 10 }, (_, i) => currentYear - i)
 
   const handleDrag = (e: React.DragEvent, type: 'question' | 'answer') => {
     e.preventDefault()
@@ -81,6 +103,9 @@ export function UploadSection() {
       setExams(newExams)
       setSelectedExamForEditing(newExams.length - 1)
       setCurrentExam({ questionPaper: null, answerKey: null })
+      setSelectedExamType('')
+      setSelectedDepartment('')
+      setSelectedYear('')
       setExamName('')
     }
   }
@@ -105,18 +130,80 @@ export function UploadSection() {
           <div className="px-8 py-12 space-y-12">
             {/* Upload Zone */}
             <section className="max-w-4xl space-y-6">
-            <div>
-              <label className="block text-sm font-semibold text-slate-950 mb-4">
-                Examination Details
-              </label>
-              <input
-                type="text"
-                placeholder="Enter exam name (e.g., RRB NTPC 2024 - Mathematics)"
-                value={examName}
-                onChange={(e) => setExamName(e.target.value)}
-                className="input-minimal mb-6"
-              />
-            </div>
+              {/* Examination Selection Flow */}
+              <div className="space-y-4">
+                <label className="block text-sm font-semibold text-slate-950 mb-4">
+                  Examination Details
+                </label>
+
+                {/* Exam Type Dropdown */}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-2">
+                    Select Exam <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={selectedExamType}
+                    onChange={(e) => setSelectedExamType(e.target.value)}
+                    className="input-minimal w-full"
+                  >
+                    <option value="">Choose an exam...</option>
+                    {examTypes.map((exam) => (
+                      <option key={exam} value={exam}>
+                        {exam}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Department Dropdown */}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-2">
+                    Select Department <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={selectedDepartment}
+                    onChange={(e) => setSelectedDepartment(e.target.value)}
+                    className="input-minimal w-full"
+                  >
+                    <option value="">Choose a department...</option>
+                    {departments.map((dept) => (
+                      <option key={dept} value={dept}>
+                        {dept}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Year Picker */}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-2">
+                    Select Year <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    min={currentYear - 10}
+                    max={currentYear}
+                    placeholder="YYYY"
+                    value={selectedYear}
+                    onChange={(e) => setSelectedYear(e.target.value)}
+                    className="input-minimal w-full"
+                  />
+                </div>
+
+                {/* Paper Name Input */}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-2">
+                    Paper Name <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g., Morning Shift, Evening Shift"
+                    value={examName}
+                    onChange={(e) => setExamName(e.target.value)}
+                    className="input-minimal w-full"
+                  />
+                </div>
+              </div>
 
             {/* Two Column Upload */}
             <div className="grid grid-cols-2 gap-6">
@@ -130,7 +217,7 @@ export function UploadSection() {
                   onDragLeave={(e) => handleDrag(e, 'question')}
                   onDragOver={(e) => handleDrag(e, 'question')}
                   onDrop={(e) => handleDrop(e, 'question')}
-                  className={`border-2 border-dashed p-8 text-center transition-colors ${
+                  className={`border-2 border-dashed p-8 text-center transition-colors min-h-64 flex flex-col items-center justify-center ${
                     isDragActive === 'question'
                       ? 'border-slate-900 bg-slate-100'
                       : 'border-slate-300 hover:border-slate-400 hover:bg-slate-50'
@@ -164,7 +251,7 @@ export function UploadSection() {
                         Drop question paper here
                       </p>
                       <p className="text-sm text-slate-600 mb-6">
-                        or click to browse haha
+                        or click to browse
                       </p>
 
                       <label className="inline-block">
@@ -193,7 +280,7 @@ export function UploadSection() {
                   onDragLeave={(e) => handleDrag(e, 'answer')}
                   onDragOver={(e) => handleDrag(e, 'answer')}
                   onDrop={(e) => handleDrop(e, 'answer')}
-                  className={`border-2 border-dashed p-8 text-center transition-colors ${
+                  className={`border-2 border-dashed p-8 text-center transition-colors min-h-64 flex flex-col items-center justify-center ${
                     isDragActive === 'answer'
                       ? 'border-slate-900 bg-slate-100'
                       : 'border-slate-300 hover:border-slate-400 hover:bg-slate-50'
@@ -257,13 +344,21 @@ export function UploadSection() {
               <div className="flex gap-3 pt-4">
                 <button
                   onClick={submitExam}
-                  className="btn-minimal-primary flex-1"
+                  disabled={!selectedExamType || !selectedDepartment || !selectedYear || !examName || !currentExam.questionPaper || !currentExam.answerKey}
+                  className={`btn-minimal-primary flex-1 ${
+                    !selectedExamType || !selectedDepartment || !selectedYear || !examName || !currentExam.questionPaper || !currentExam.answerKey
+                      ? 'opacity-50 cursor-not-allowed'
+                      : ''
+                  }`}
                 >
                   PROCESS
                 </button>
                 <button
                   onClick={() => {
                     setCurrentExam({ questionPaper: null, answerKey: null })
+                    setSelectedExamType('')
+                    setSelectedDepartment('')
+                    setSelectedYear('')
                     setExamName('')
                   }}
                   className="btn-minimal-secondary flex-1"

@@ -17,7 +17,7 @@ export function UsersSection() {
   const [users, setUsers] = useState<User[]>([
     {
       id: '1',
-      name: 'Rajesh Kumar',
+      name: 'Pramod Debnath',
       email: 'rajesh@example.com',
       role: 'admin',
       joinDate: '2023-11-01',
@@ -25,7 +25,7 @@ export function UsersSection() {
     },
     {
       id: '2',
-      name: 'Priya Sharma',
+      name: 'Gurjit Ching',
       email: 'priya@example.com',
       role: 'examiner',
       joinDate: '2023-12-15',

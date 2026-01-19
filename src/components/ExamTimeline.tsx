@@ -10,7 +10,7 @@ interface TimelineItem {
 const items: TimelineItem[] = [
   {
     id: '1',
-    exam: 'RRB NTPC 2024 - Mathematics',
+    exam: 'Junior Engineer',
     status: 'active',
     daysAgo: 0,
   },

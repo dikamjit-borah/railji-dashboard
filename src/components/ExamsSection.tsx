@@ -17,7 +17,7 @@ export function ExamsSection() {
   const [exams, setExams] = useState<Exam[]>([
     {
       id: '1',
-      name: 'RRB NTPC 2024 - Mathematics',
+      name: 'Junior Engineer',
       status: 'active',
       totalQuestions: 100,
       createdDate: '2024-01-05',
