@@ -106,7 +106,7 @@ export function UsersSection() {
   const activeCount = users.filter((u) => u.status === 'active').length
 
   return (
-    <div className="ml-56 bg-slate-50 min-h-screen">
+    <div className="bg-slate-50 min-h-screen">
       <PageHeader
         title="Users"
         subtitle={`Manage platform users (${activeCount} active)`}

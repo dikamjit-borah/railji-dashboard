@@ -97,7 +97,7 @@ export function ExamsSection() {
   }
 
   return (
-    <div className="ml-56 bg-slate-50 min-h-screen">
+    <div className="bg-slate-50 min-h-screen">
       <PageHeader
         title="Examinations"
         subtitle="Manage examination papers and details"

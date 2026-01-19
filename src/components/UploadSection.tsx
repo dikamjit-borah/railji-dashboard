@@ -96,7 +96,7 @@ export function UploadSection() {
           onBack={() => setSelectedExamForEditing(null)}
         />
       ) : (
-        <div className="ml-56 bg-slate-50 min-h-screen">
+        <div className="bg-slate-50 min-h-screen">
           <PageHeader
             title="Upload Paper"
             subtitle="Add examination papers to the system"

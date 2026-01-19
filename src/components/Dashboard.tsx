@@ -30,7 +30,7 @@ export function Dashboard() {
   ]
 
   return (
-    <div className="ml-56 bg-slate-50 min-h-screen">
+    <div className="bg-slate-50 min-h-screen">
       {/* Header */}
       <PageHeader
         title="Dashboard"

@@ -17,7 +17,7 @@ export default function RootLayout({
       <body className="antialiased">
         <div className="flex h-screen bg-slate-50">
           <Sidebar />
-          <main className="flex-1 overflow-auto">
+          <main className="ml-56 flex-1 overflow-auto flex flex-col">
             {children}
           </main>
         </div>

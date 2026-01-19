@@ -9,7 +9,7 @@ interface PageHeaderProps {
 
 export function PageHeader({ title, subtitle, action }: PageHeaderProps) {
   return (
-    <div className="ml-56 border-b border-slate-200 bg-white sticky top-0 z-40">
+    <div className="border-b border-slate-200 bg-white">
       <div className="px-8 py-6 flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-slate-950">
