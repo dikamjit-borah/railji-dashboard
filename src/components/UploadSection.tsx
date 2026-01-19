@@ -127,7 +127,7 @@ export function UploadSection() {
             subtitle="Add examination papers to the system"
           />
 
-          <div className="px-8 py-12 space-y-12">
+          <div className="px-4 md:px-8 py-8 md:py-12 space-y-12">
             {/* Upload Zone */}
             <section className="max-w-4xl space-y-6">
               {/* Examination Selection Flow */}
@@ -144,7 +144,7 @@ export function UploadSection() {
                   <select
                     value={selectedExamType}
                     onChange={(e) => setSelectedExamType(e.target.value)}
-                    className="input-minimal w-full"
+                    className="input-minimal w-full text-sm"
                   >
                     <option value="">Choose an exam...</option>
                     {examTypes.map((exam) => (
@@ -163,7 +163,7 @@ export function UploadSection() {
                   <select
                     value={selectedDepartment}
                     onChange={(e) => setSelectedDepartment(e.target.value)}
-                    className="input-minimal w-full"
+                    className="input-minimal w-full text-sm"
                   >
                     <option value="">Choose a department...</option>
                     {departments.map((dept) => (
@@ -186,7 +186,7 @@ export function UploadSection() {
                     placeholder="YYYY"
                     value={selectedYear}
                     onChange={(e) => setSelectedYear(e.target.value)}
-                    className="input-minimal w-full"
+                    className="input-minimal w-full text-sm"
                   />
                 </div>
 
@@ -200,13 +200,13 @@ export function UploadSection() {
                     placeholder="e.g., Morning Shift, Evening Shift"
                     value={examName}
                     onChange={(e) => setExamName(e.target.value)}
-                    className="input-minimal w-full"
+                    className="input-minimal w-full text-sm"
                   />
                 </div>
               </div>
 
-            {/* Two Column Upload */}
-            <div className="grid grid-cols-2 gap-6">
+            {/* Two Column Upload - Responsive */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
               {/* Question Paper Upload */}
               <div className="space-y-4">
                 <h3 className="text-sm font-semibold text-slate-950">

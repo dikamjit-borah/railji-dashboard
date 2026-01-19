@@ -2,26 +2,53 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { FileText, BookOpen, Users, Home, BarChart3 } from 'lucide-react'
+import { FileText, BookOpen, Users, Home, BarChart3, X } from 'lucide-react'
 
-export function Sidebar() {
+interface SidebarProps {
+  isOpen?: boolean
+  onClose?: () => void
+}
+
+export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
   const pathname = usePathname()
 
   const isActive = (path: string) => pathname === path
 
   return (
-    <aside className="w-56 bg-slate-900 text-slate-50 border-r border-slate-800 flex flex-col fixed h-screen">
-      {/* Logo/Header */}
-      <div className="px-6 py-8 border-b border-slate-700">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-slate-100 rounded-sm flex items-center justify-center">
-            <div className="w-1 h-4 bg-slate-900 mr-1"></div>
-            <div className="w-1 h-4 bg-slate-900"></div>
+    <>
+      {/* Mobile Overlay */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 md:hidden z-30"
+          onClick={onClose}
+        />
+      )}
+
+      {/* Sidebar */}
+      <aside
+        className={`w-56 bg-slate-900 text-slate-50 border-r border-slate-800 flex flex-col fixed h-screen z-40 transition-transform duration-300 ${
+          isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+        } md:relative md:translate-x-0`}
+      >
+        {/* Close button on mobile */}
+        <button
+          onClick={onClose}
+          className="absolute top-6 right-4 md:hidden text-slate-300 hover:text-slate-50"
+        >
+          <X className="w-6 h-6" />
+        </button>
+
+        {/* Logo/Header */}
+        <div className="px-6 py-8 border-b border-slate-700">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-slate-100 rounded-sm flex items-center justify-center">
+              <div className="w-1 h-4 bg-slate-900 mr-1"></div>
+              <div className="w-1 h-4 bg-slate-900"></div>
+            </div>
+            <h1 className="text-lg font-bold tracking-tight">Railji</h1>
           </div>
-          <h1 className="text-lg font-bold tracking-tight">Railji</h1>
+          <p className="text-xs text-slate-400 mt-2">Exam Dashboard</p>
         </div>
-        <p className="text-xs text-slate-400 mt-2">Exam Dashboard</p>
-      </div>
 
       {/* Navigation */}
       <nav className="flex-1 px-4 py-6 space-y-1">
@@ -86,6 +113,7 @@ export function Sidebar() {
         </div>
       </div>
     </aside>
+    </>
   )
 }
 

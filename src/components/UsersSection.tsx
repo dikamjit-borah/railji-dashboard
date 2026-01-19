@@ -116,7 +116,7 @@ export function UsersSection() {
         }}
       />
 
-      <div className="px-8 py-12">
+      <div className="px-4 md:px-8 py-8 md:py-12">
         <div className="space-y-0 border border-slate-200 bg-white overflow-hidden">
           {/* Table Header */}
           <div className="grid grid-cols-5 gap-6 px-6 py-4 bg-slate-50 border-b border-slate-100 text-xs font-semibold text-slate-600 uppercase tracking-widest">

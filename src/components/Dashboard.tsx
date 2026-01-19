@@ -38,7 +38,7 @@ export function Dashboard() {
       />
 
       {/* Main Content */}
-      <div className="px-8 py-8 space-y-12">
+      <div className="px-4 md:px-8 py-6 md:py-8 space-y-8 md:space-y-12">
         {/* Stats Grid */}
         <section>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
