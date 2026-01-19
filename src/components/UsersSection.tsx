@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Edit2, Trash2, Plus, Shield, BookOpen } from 'lucide-react'
+import { Edit2, Trash2, Plus } from 'lucide-react'
 import { PageHeader } from './PageHeader'
 
 interface User {
@@ -55,11 +55,11 @@ export function UsersSection() {
     role: 'student',
   })
 
-  const roleIcons = {
+  /* const roleIcons = {
     admin: Shield,
     examiner: BookOpen,
     student: BookOpen,
-  }
+  } */
 
   const roleColors = {
     admin: { bg: 'bg-slate-900', text: 'text-slate-50' },

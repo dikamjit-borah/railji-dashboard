@@ -93,8 +93,7 @@ export function UploadSection() {
   }
 
   const isExamComplete = () => {
-    return true
-    return currentExam.questionPaper && currentExam.answerKey && examName.trim()
+    return currentExam.questionPaper && currentExam.answerKey && examName.trim() !== ''
   }
 
   const submitExam = () => {
