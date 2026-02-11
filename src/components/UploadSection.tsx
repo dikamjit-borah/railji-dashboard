@@ -277,6 +277,7 @@ export function UploadSection() {
         negativeMarking: Number(currentExam.negativeMarks),
         isFree: currentExam.isFree,
         isNew: currentExam.isNew,
+        duration: currentExam.duration,
         questions,
       }
 
