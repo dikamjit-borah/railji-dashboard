@@ -15,6 +15,7 @@ interface ExamData {
   paperDescription: string
   passMarks: number | ''
   negativeMarks: number | ''
+  duration: number | ''
   isFree: boolean
   isNew: boolean
   jsonFile: {
@@ -52,6 +53,7 @@ export function UploadSection() {
     paperDescription: '',
     passMarks: '',
     negativeMarks: '',
+    duration: '',
     isFree: false,
     isNew: false,
     jsonFile: null,
@@ -236,6 +238,7 @@ export function UploadSection() {
       currentExam.paperName.trim() &&
       currentExam.passMarks !== '' &&
       currentExam.negativeMarks !== '' &&
+      currentExam.duration !== '' &&
       currentExam.jsonFile
 
     // For general papers, department and paperCode are not required
@@ -255,6 +258,12 @@ export function UploadSection() {
 
     setCreatingPaper(true)
     try {
+      // Extract questions from JSON file
+      const questions = currentExam.jsonFile?.content?.questions || []
+      
+      // Extract sections and other metadata from JSON
+      const totalQuestions = questions.length
+
       const payload = {
         departmentId: currentExam.department || undefined,
         paperCode: currentExam.paperCode || undefined,
@@ -263,13 +272,15 @@ export function UploadSection() {
         description: currentExam.paperDescription,
         year: Number(currentExam.year),
         shift: currentExam.shift.charAt(0).toUpperCase() + currentExam.shift.slice(1),
+        totalQuestions,
         passMarks: Number(currentExam.passMarks),
         negativeMarking: Number(currentExam.negativeMarks),
         isFree: currentExam.isFree,
         isNew: currentExam.isNew,
+        questions,
       }
 
-      const response = await fetch('http://localhost:3002/dashboard/v1/create/paper', {
+      const response = await fetch('https://railji-dashboard.onrender.com/dashboard/v1/create/paper', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -278,7 +289,8 @@ export function UploadSection() {
       })
 
       if (!response.ok) {
-        throw new Error(`API error: ${response.statusText}`)
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.message || `API error: ${response.statusText}`)
       }
 
       const result = await response.json()
@@ -296,10 +308,12 @@ export function UploadSection() {
         paperDescription: '',
         passMarks: '',
         negativeMarks: '',
+        duration: '',
         isFree: false,
         isNew: false,
         jsonFile: null,
       })
+      setStage('upload')
     } catch (error) {
       console.error('Failed to create paper:', error)
       alert(`Failed to create paper: ${error instanceof Error ? error.message : 'Unknown error'}`)
@@ -577,6 +591,25 @@ export function UploadSection() {
                     className="input-minimal w-full"
                   />
                 </div>
+              </div>
+
+              {/* Duration */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Duration (minutes) <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="number"
+                  placeholder="e.g., 90"
+                  value={currentExam.duration}
+                  onChange={(e) =>
+                    setCurrentExam({
+                      ...currentExam,
+                      duration: e.target.value ? Number(e.target.value) : '',
+                    })
+                  }
+                  className="input-minimal w-full"
+                />
               </div>
 
               {/* Checkboxes */}
