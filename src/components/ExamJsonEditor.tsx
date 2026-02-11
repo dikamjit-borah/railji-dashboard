@@ -4,13 +4,22 @@ import { useState } from 'react'
 import { ArrowLeft, Plus, Trash2, Copy, Check } from 'lucide-react'
 
 interface Question {
+  id?: number
+  ques?: string
+  question?: { en: string; hi: string }
+  ques_hi?: string
+  options: Array<{ en: string; hi: string }>
+  correct: string | number
+}
+
+interface NormalizedQuestion {
   ques: string
   ques_hi: string
   options: Array<{ en: string; hi: string }>
   correct: string
 }
 
-const DUMMY_EXAM_DATA: Question[] = [
+const DUMMY_EXAM_DATA: NormalizedQuestion[] = [
   {
     ques: 'What is the capital of India?',
     ques_hi: 'भारत की राजधानी क्या है?',
@@ -46,13 +55,83 @@ const DUMMY_EXAM_DATA: Question[] = [
   },
 ]
 
-export function ExamJsonEditor({ onBack }: { readonly onBack: () => void }) {
-  const [questions, setQuestions] = useState<Question[]>(DUMMY_EXAM_DATA)
-  const [expandedIndex, setExpandedIndex] = useState<number | null>(null)
+export function ExamJsonEditor({ 
+  onBack,
+  onNext,
+  initialQuestions 
+}: { 
+  readonly onBack: () => void
+  readonly onNext?: () => void
+  readonly initialQuestions?: Question[] | { questions: Question[] }
+}) {
+  // Normalize the questions data for editing
+  const normalizeQuestions = (data: any): NormalizedQuestion[] => {
+    if (!data) return DUMMY_EXAM_DATA
+    
+    // If data has a questions property, use that
+    const questionsArray = Array.isArray(data) ? data : data.questions || []
+    
+    // Transform each question to the expected format for editing
+    return questionsArray.map((q: any) => {
+      let correctAnswer = q.correct
+      
+      // If correct is a number (index), get the option text
+      if (typeof q.correct === 'number' && q.options && q.options[q.correct]) {
+        correctAnswer = q.options[q.correct].en
+      }
+      
+      return {
+        ques: q.ques || q.question?.en || 'Question',
+        ques_hi: q.ques_hi || q.question?.hi || 'प्रश्न',
+        options: q.options || [],
+        correct: correctAnswer,
+      }
+    })
+  }
+
+  const [originalData, setOriginalData] = useState<any>(initialQuestions)
+  const [questions, setQuestions] = useState<NormalizedQuestion[]>(normalizeQuestions(initialQuestions))
+  const [jsonText, setJsonText] = useState<string>(JSON.stringify(originalData, null, 2))
   const [copied, setCopied] = useState(false)
 
+  // Sync questions to JSON when questions change
+  const syncQuestionsToJson = (updatedQuestions: NormalizedQuestion[]) => {
+    setQuestions(updatedQuestions)
+    
+    // Update the original data structure
+    if (originalData && originalData.questions) {
+      const updated = {
+        ...originalData,
+        questions: updatedQuestions.map((q) => ({
+          ...originalData.questions[updatedQuestions.indexOf(q)],
+          ques: q.ques,
+          ques_hi: q.ques_hi,
+          options: q.options,
+          correct: q.correct,
+        })),
+      }
+      setOriginalData(updated)
+      setJsonText(JSON.stringify(updated, null, 2))
+    }
+  }
+
+  // Parse JSON and sync to questions
+  const syncJsonToQuestions = (jsonStr: string) => {
+    setJsonText(jsonStr)
+    try {
+      const parsed = JSON.parse(jsonStr)
+      setOriginalData(parsed)
+      const normalized = normalizeQuestions(parsed)
+      setQuestions(normalized)
+    } catch (error) {
+      // Invalid JSON, just update the text
+    }
+  }
+
+  const [expandedIndex, setExpandedIndex] = useState<number | null>(null)
+
   const addQuestion = () => {
-    const newQuestion: Question = {
+    const newQuestion: NormalizedQuestion = {
       ques: 'New Question',
       ques_hi: 'नया प्रश्न',
       options: [
@@ -63,17 +142,17 @@ export function ExamJsonEditor({ onBack }: { readonly onBack: () => void }) {
       ],
       correct: 'Option A',
     }
-    setQuestions([...questions, newQuestion])
+    syncQuestionsToJson([...questions, newQuestion])
   }
 
-  const updateQuestion = (index: number, updatedQuestion: Question) => {
+  const updateQuestion = (index: number, updatedQuestion: NormalizedQuestion) => {
     const newQuestions = [...questions]
     newQuestions[index] = updatedQuestion
-    setQuestions(newQuestions)
+    syncQuestionsToJson(newQuestions)
   }
 
   const deleteQuestion = (index: number) => {
-    setQuestions(questions.filter((_, i) => i !== index))
+    syncQuestionsToJson(questions.filter((_, i) => i !== index))
   }
 
   const updateOption = (qIndex: number, oIndex: number, lang: 'en' | 'hi', value: string) => {
@@ -83,8 +162,7 @@ export function ExamJsonEditor({ onBack }: { readonly onBack: () => void }) {
   }
 
   const copyToClipboard = () => {
-    const jsonString = JSON.stringify(questions, null, 2)
-    navigator.clipboard.writeText(jsonString)
+    navigator.clipboard.writeText(jsonText)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
@@ -102,7 +180,7 @@ export function ExamJsonEditor({ onBack }: { readonly onBack: () => void }) {
               <ArrowLeft className="w-5 h-5 text-slate-600" />
             </button>
             <div>
-              <h1 className="text-2xl font-bold text-slate-950">Exam Editor</h1>
+              <h1 className="text-2xl font-bold text-slate-950">Paper Editor</h1>
               <p className="text-sm text-slate-600 mt-1">
                 Edit exam questions and answers in JSON format
               </p>
@@ -132,6 +210,14 @@ export function ExamJsonEditor({ onBack }: { readonly onBack: () => void }) {
               <Plus className="w-4 h-4" />
               Add Question
             </button>
+            {onNext && (
+              <button
+                onClick={onNext}
+                className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors"
+              >
+                Next: Paper Details →
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -319,11 +405,13 @@ export function ExamJsonEditor({ onBack }: { readonly onBack: () => void }) {
         {/* JSON Preview */}
         <div className="w-1/3 bg-white border-l border-slate-200 p-4 flex flex-col overflow-hidden">
           <h3 className="text-sm font-semibold text-slate-950 mb-3">
-            JSON Preview
+            JSON Preview (Editable)
           </h3>
-          <div className="bg-slate-900 rounded-lg p-3 overflow-auto flex-1 text-xs font-mono text-slate-100">
-            <pre className="whitespace-pre-wrap break-words">{JSON.stringify(questions, null, 2)}</pre>
-          </div>
+          <textarea
+            value={jsonText}
+            onChange={(e) => syncJsonToQuestions(e.target.value)}
+            className="bg-slate-900 rounded-lg p-3 overflow-auto flex-1 text-xs font-mono text-slate-100 resize-none focus:outline-none focus:ring-2 focus:ring-slate-400"
+          />
           <button
             onClick={copyToClipboard}
             className="w-full mt-3 flex items-center justify-center gap-2 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-950 rounded-lg font-medium transition-colors text-xs"
