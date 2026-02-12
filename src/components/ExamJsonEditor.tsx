@@ -215,7 +215,7 @@ export function ExamJsonEditor({
                     <p className="text-xs text-slate-600 mt-2">
                       Correct Answer:{' '}
                       <span className="font-medium text-green-700">
-                        {question.correct + 1}
+                        {String.fromCharCode(65 + question.correct)}
                       </span>
                     </p>
                   </div>
@@ -332,20 +332,20 @@ export function ExamJsonEditor({
                       </label>
                       <select
                         id={`correct-${qIndex}`}
-                        value={question.correct + 1}
+                        value={String.fromCharCode(65 + question.correct)}
                         onChange={(e) => {
-                          const selectedValue = parseInt(e.target.value) - 1
+                          const selectedIndex = e.target.value.charCodeAt(0) - 65
                           const updated = {
                             ...question,
-                            correct: selectedValue,
+                            correct: selectedIndex,
                           }
                           updateQuestion(qIndex, updated)
                         }}
                         className="w-full px-3 py-2 border border-slate-200 rounded-lg text-slate-950 focus:outline-none focus:border-slate-400"
                       >
                         {question.options.map((_, i) => (
-                          <option key={`opt-${i}`} value={i + 1}>
-                            {i + 1}
+                          <option key={`opt-${i}`} value={String.fromCharCode(65 + i)}>
+                            {String.fromCharCode(65 + i)}
                           </option>
                         ))}
                       </select>
