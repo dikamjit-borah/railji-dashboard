@@ -17,7 +17,6 @@ interface ExamData {
   negativeMarks: number | ''
   duration: number | ''
   isFree: boolean
-  isNew: boolean
   jsonFile: {
     name: string
     size: string
@@ -55,7 +54,6 @@ export function UploadSection() {
     negativeMarks: '',
     duration: '',
     isFree: false,
-    isNew: false,
     jsonFile: null,
   })
   const [isDragActive, setIsDragActive] = useState<string | null>(null)
@@ -72,12 +70,12 @@ export function UploadSection() {
     fetchDepartments()
   }, [])
 
-  // Fetch paper codes when department changes
+  // Fetch paper codes when department or paperType changes
   useEffect(() => {
     if (currentExam.department && currentExam.paperType !== 'general') {
       fetchPaperCodes(currentExam.department, currentExam.paperType)
     }
-  }, [currentExam.department])
+  }, [currentExam.department, currentExam.paperType])
 
   // Handle paper type changes
   useEffect(() => {
@@ -275,9 +273,8 @@ export function UploadSection() {
         totalQuestions,
         passMarks: Number(currentExam.passMarks),
         negativeMarking: Number(currentExam.negativeMarks),
+        duration: Number(currentExam.duration),
         isFree: currentExam.isFree,
-        isNew: currentExam.isNew,
-        duration: currentExam.duration,
         questions,
       }
 
@@ -311,7 +308,6 @@ export function UploadSection() {
         negativeMarks: '',
         duration: '',
         isFree: false,
-        isNew: false,
         jsonFile: null,
       })
       setStage('upload')
@@ -436,7 +432,7 @@ export function UploadSection() {
               {/* Paper Code */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Paper Code <span className="text-red-500">*</span>
+                  Section Code <span className="text-red-500">*</span>
                 </label>
                 <select
                   value={currentExam.paperCode}
@@ -464,14 +460,14 @@ export function UploadSection() {
                         ? 'Select department first'
                         : loadingCodes
                           ? 'Loading codes...'
-                          : 'Select paper code'}
+                          : 'Select section code'}
                   </option>
                   {paperCodes.map((code) => (
                     <option key={code} value={code}>
                       {code}
                     </option>
                   ))}
-                  <option value="__add_new__">+ Add New Paper Code</option>
+                  <option value="__add_new__">+ Add New Section Code</option>
                 </select>
               </div>
 
@@ -483,6 +479,8 @@ export function UploadSection() {
                 <input
                   type="number"
                   placeholder="e.g., 2024"
+                  min="2000"
+                  max="2100"
                   value={currentExam.year}
                   onChange={(e) =>
                     setCurrentExam({
@@ -564,6 +562,7 @@ export function UploadSection() {
                   <input
                     type="number"
                     placeholder="e.g., 40"
+                    min="0"
                     value={currentExam.passMarks}
                     onChange={(e) =>
                       setCurrentExam({
@@ -582,6 +581,7 @@ export function UploadSection() {
                     type="number"
                     placeholder="e.g., 0.25"
                     step="0.01"
+                    min="0"
                     value={currentExam.negativeMarks}
                     onChange={(e) =>
                       setCurrentExam({
@@ -602,6 +602,7 @@ export function UploadSection() {
                 <input
                   type="number"
                   placeholder="e.g., 90"
+                  min="1"
                   value={currentExam.duration}
                   onChange={(e) =>
                     setCurrentExam({
@@ -628,20 +629,6 @@ export function UploadSection() {
                     className="w-4 h-4"
                   />
                   <span className="text-sm font-medium text-slate-700">Free</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={currentExam.isNew}
-                    onChange={(e) =>
-                      setCurrentExam({
-                        ...currentExam,
-                        isNew: e.target.checked,
-                      })
-                    }
-                    className="w-4 h-4"
-                  />
-                  <span className="text-sm font-medium text-slate-700">New</span>
                 </label>
               </div>
 
@@ -768,10 +755,10 @@ export function UploadSection() {
       {showAddPaperCodeModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-            <h2 className="text-lg font-semibold text-slate-950 mb-4">Add New Paper Code</h2>
+            <h2 className="text-lg font-semibold text-slate-950 mb-4">Add New Section Code</h2>
             <input
               type="text"
-              placeholder="Enter paper code (e.g., RRB-2024-001)"
+              placeholder="Enter section code (e.g., RRB-2024-001)"
               value={newPaperCode}
               onChange={(e) => setNewPaperCode(e.target.value)}
               className="input-minimal w-full mb-4"

@@ -13,47 +13,11 @@ interface Question {
 }
 
 interface NormalizedQuestion {
-  ques: string
-  ques_hi: string
+  id?: number
+  question: { en: string; hi: string }
   options: Array<{ en: string; hi: string }>
-  correct: string
+  correct: number
 }
-
-const DUMMY_EXAM_DATA: NormalizedQuestion[] = [
-  {
-    ques: 'What is the capital of India?',
-    ques_hi: 'भारत की राजधानी क्या है?',
-    options: [
-      { en: 'Mumbai', hi: 'मुंबई' },
-      { en: 'New Delhi', hi: 'नई दिल्ली' },
-      { en: 'Bangalore', hi: 'बेंगलुरु' },
-      { en: 'Kolkata', hi: 'कोलकाता' },
-    ],
-    correct: 'New Delhi',
-  },
-  {
-    ques: 'What is 2 + 2?',
-    ques_hi: '2 + 2 क्या है?',
-    options: [
-      { en: '3', hi: '3' },
-      { en: '4', hi: '4' },
-      { en: '5', hi: '5' },
-      { en: '6', hi: '6' },
-    ],
-    correct: '4',
-  },
-  {
-    ques: 'What is the largest planet in our solar system?',
-    ques_hi: 'हमारे सौर मंडल का सबसे बड़ा ग्रह कौन सा है?',
-    options: [
-      { en: 'Mars', hi: 'मंगल' },
-      { en: 'Jupiter', hi: 'बृहस्पति' },
-      { en: 'Saturn', hi: 'शनि' },
-      { en: 'Venus', hi: 'शुक्र' },
-    ],
-    correct: 'Jupiter',
-  },
-]
 
 export function ExamJsonEditor({ 
   onBack,
@@ -66,25 +30,30 @@ export function ExamJsonEditor({
 }) {
   // Normalize the questions data for editing
   const normalizeQuestions = (data: any): NormalizedQuestion[] => {
-    if (!data) return DUMMY_EXAM_DATA
+    // if (!data) return {}
     
     // If data has a questions property, use that
     const questionsArray = Array.isArray(data) ? data : data.questions || []
     
     // Transform each question to the expected format for editing
     return questionsArray.map((q: any) => {
-      let correctAnswer = q.correct
+      let correctValue = 0 // Default to 0 (first option)
       
-      // If correct is a number (index), get the option text
-      if (typeof q.correct === 'number' && q.options && q.options[q.correct]) {
-        correctAnswer = q.options[q.correct].en
+      // If correct is already a number, use it
+      if (typeof q.correct === 'number') {
+        correctValue = q.correct
+      } 
+      // If correct is a string, find the matching option index
+      else if (typeof q.correct === 'string' && q.options) {
+        const foundIndex = q.options.findIndex((opt: any) => opt.en === q.correct)
+        correctValue = foundIndex >= 0 ? foundIndex : 0
       }
       
       return {
-        ques: q.ques || q.question?.en || 'Question',
-        ques_hi: q.ques_hi || q.question?.hi || 'प्रश्न',
+        id: q.id,
+        question: q.question || { en: q.ques || 'Question', hi: q.ques_hi || 'प्रश्न' },
         options: q.options || [],
-        correct: correctAnswer,
+        correct: correctValue,
       }
     })
   }
@@ -102,10 +71,9 @@ export function ExamJsonEditor({
     if (originalData && originalData.questions) {
       const updated = {
         ...originalData,
-        questions: updatedQuestions.map((q) => ({
-          ...originalData.questions[updatedQuestions.indexOf(q)],
-          ques: q.ques,
-          ques_hi: q.ques_hi,
+        questions: updatedQuestions.map((q, index) => ({
+          id: q.id || (originalData.questions[index]?.id),
+          question: q.question,
           options: q.options,
           correct: q.correct,
         })),
@@ -132,15 +100,15 @@ export function ExamJsonEditor({
 
   const addQuestion = () => {
     const newQuestion: NormalizedQuestion = {
-      ques: 'New Question',
-      ques_hi: 'नया प्रश्न',
+      id: questions.length + 1,
+      question: { en: 'New Question', hi: 'नया प्रश्न' },
       options: [
         { en: 'Option A', hi: 'विकल्प A' },
         { en: 'Option B', hi: 'विकल्प B' },
         { en: 'Option C', hi: 'विकल्प C' },
         { en: 'Option D', hi: 'विकल्प D' },
       ],
-      correct: 'Option A',
+      correct: 0,
     }
     syncQuestionsToJson([...questions, newQuestion])
   }
@@ -239,15 +207,15 @@ export function ExamJsonEditor({
                 >
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-slate-950">
-                      Q{qIndex + 1}: {question.ques}
+                      Q{question.id || qIndex + 1}: {question.question.en}
                     </p>
                     <p className="font-semibold text-slate-950 text-sm mt-1">
-                      {question.ques_hi}
+                      {question.question.hi}
                     </p>
                     <p className="text-xs text-slate-600 mt-2">
                       Correct Answer:{' '}
                       <span className="font-medium text-green-700">
-                        {question.correct}
+                        {question.correct + 1}
                       </span>
                     </p>
                   </div>
@@ -270,9 +238,12 @@ export function ExamJsonEditor({
                         <input
                           id={`ques-${qIndex}`}
                           type="text"
-                          value={question.ques}
+                          value={question.question.en}
                           onChange={(e) => {
-                            const updated = { ...question, ques: e.target.value }
+                            const updated = { 
+                              ...question, 
+                              question: { ...question.question, en: e.target.value }
+                            }
                             updateQuestion(qIndex, updated)
                           }}
                           className="w-full px-3 py-2 border border-slate-200 rounded-lg text-slate-950 focus:outline-none focus:border-slate-400"
@@ -288,9 +259,12 @@ export function ExamJsonEditor({
                         <input
                           id={`ques-hi-${qIndex}`}
                           type="text"
-                          value={question.ques_hi}
+                          value={question.question.hi}
                           onChange={(e) => {
-                            const updated = { ...question, ques_hi: e.target.value }
+                            const updated = { 
+                              ...question, 
+                              question: { ...question.question, hi: e.target.value }
+                            }
                             updateQuestion(qIndex, updated)
                           }}
                           className="w-full px-3 py-2 border border-slate-200 rounded-lg text-slate-950 focus:outline-none focus:border-slate-400"
@@ -308,7 +282,7 @@ export function ExamJsonEditor({
                           <div
                             key={`o-${qIndex}-${oIndex}`}
                             className={`p-3 rounded-lg border ${
-                              option.en === question.correct
+                              oIndex === question.correct
                                 ? 'bg-green-50 border-green-300'
                                 : 'bg-white border-slate-200'
                             }`}
@@ -326,7 +300,7 @@ export function ExamJsonEditor({
                                 }
                                 className="flex-1 px-2 py-1 bg-white border border-slate-200 rounded text-slate-950 text-sm focus:outline-none focus:border-slate-400"
                               />
-                              {option.en === question.correct && (
+                              {oIndex === question.correct && (
                                 <span className="text-xs font-semibold text-green-700 px-2 py-1 bg-green-100 rounded">
                                   Correct
                                 </span>
@@ -358,19 +332,20 @@ export function ExamJsonEditor({
                       </label>
                       <select
                         id={`correct-${qIndex}`}
-                        value={question.correct}
+                        value={question.correct + 1}
                         onChange={(e) => {
+                          const selectedValue = parseInt(e.target.value) - 1
                           const updated = {
                             ...question,
-                            correct: e.target.value,
+                            correct: selectedValue,
                           }
                           updateQuestion(qIndex, updated)
                         }}
                         className="w-full px-3 py-2 border border-slate-200 rounded-lg text-slate-950 focus:outline-none focus:border-slate-400"
                       >
-                        {question.options.map((option, i) => (
-                          <option key={`opt-${i}`} value={option.en}>
-                            {String.fromCodePoint(65 + i)}. {option.en}
+                        {question.options.map((_, i) => (
+                          <option key={`opt-${i}`} value={i + 1}>
+                            {i + 1}
                           </option>
                         ))}
                       </select>
