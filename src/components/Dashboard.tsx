@@ -5,12 +5,12 @@ import { PageHeader } from './PageHeader'
 import { StatCard } from './StatCard'
 import { RecentUploads } from './RecentUploads'
 import { ActiveUsers } from './ActiveUsers'
-import { ExamTimeline } from './ExamTimeline'
+import { PaperTimeline } from './PaperTimeline'
 
 export function Dashboard() {
   const stats = [
     {
-      label: 'Active Exams',
+      label: 'Active Papers',
       value: '24',
       icon: FileCheck,
       change: '+2 this week',
@@ -34,7 +34,7 @@ export function Dashboard() {
       {/* Header */}
       <PageHeader
         title="Dashboard"
-        subtitle="Overview of your examination system"
+        subtitle="Overview of your paper system"
       />
 
       {/* Main Content */}
@@ -55,7 +55,7 @@ export function Dashboard() {
         <section className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Timeline - Main focus */}
           <div className="lg:col-span-2">
-            <ExamTimeline />
+            <PaperTimeline />
           </div>
 
           {/* Active Users */}

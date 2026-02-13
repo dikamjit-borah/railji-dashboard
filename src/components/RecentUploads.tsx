@@ -1,12 +1,12 @@
 import { FileText } from "lucide-react";
 
 interface Upload {
-  id: string;
-  filename: string;
-  uploadedBy: string;
-  uploadedAt: string;
-  examName: string;
-  fileSize: string;
+  id: string
+  filename: string
+  uploadedBy: string
+  uploadedAt: string
+  paperName: string
+  fileSize: string
 }
 
 const uploads: Upload[] = [
@@ -15,7 +15,7 @@ const uploads: Upload[] = [
     filename: "NTPC_Mathematics_2024.pdf",
     uploadedBy: "Gurjit Ching",
     uploadedAt: "2 hours ago",
-    examName: "RRB NTPC - Mathematics",
+    paperName: "RRB NTPC - Mathematics",
     fileSize: "2.4 MB",
   },
   {
@@ -23,7 +23,7 @@ const uploads: Upload[] = [
     filename: "GroupD_General_Awareness.pdf",
     uploadedBy: "Pramod Debnath",
     uploadedAt: "1 day ago",
-    examName: "RRB Group D",
+    paperName: "RRB Group D",
     fileSize: "1.8 MB",
   },
   {
@@ -31,7 +31,7 @@ const uploads: Upload[] = [
     filename: "Technician_Reasoning.pdf",
     uploadedBy: "Amit Patel",
     uploadedAt: "3 days ago",
-    examName: "Railways Technician",
+    paperName: "Railways Technician",
     fileSize: "3.1 MB",
   },
 ];
@@ -51,7 +51,7 @@ export function RecentUploads() {
           <thead>
             <tr>
               <th>Filename</th>
-              <th>Exam</th>
+              <th>Paper</th>
               <th>Uploaded By</th>
               <th>When</th>
               <th>Size</th>
@@ -66,7 +66,7 @@ export function RecentUploads() {
                     {upload.filename}
                   </div>
                 </td>
-                <td>{upload.examName}</td>
+                <td>{upload.paperName}</td>
                 <td>{upload.uploadedBy}</td>
                 <td className="text-slate-600">{upload.uploadedAt}</td>
                 <td className="text-slate-600 text-right">{upload.fileSize}</td>

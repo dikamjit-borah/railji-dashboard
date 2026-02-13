@@ -8,7 +8,7 @@ interface User {
   id: string
   name: string
   email: string
-  role: 'admin' | 'examiner' | 'student'
+  role: 'admin' | 'reviewer' | 'student'
   joinDate: string
   status: 'active' | 'inactive'
 }
@@ -27,7 +27,7 @@ export function UsersSection() {
       id: '2',
       name: 'Gurjit Ching',
       email: 'priya@example.com',
-      role: 'examiner',
+      role: 'reviewer',
       joinDate: '2023-12-15',
       status: 'active',
     },
@@ -35,7 +35,7 @@ export function UsersSection() {
       id: '3',
       name: 'Amit Patel',
       email: 'amit@example.com',
-      role: 'examiner',
+      role: 'reviewer',
       joinDate: '2024-01-01',
       status: 'active',
     },
@@ -63,7 +63,7 @@ export function UsersSection() {
 
   const roleColors = {
     admin: { bg: 'bg-slate-900', text: 'text-slate-50' },
-    examiner: { bg: 'bg-slate-700', text: 'text-slate-50' },
+    reviewer: { bg: 'bg-slate-700', text: 'text-slate-50' },
     student: { bg: 'bg-slate-200', text: 'text-slate-800' },
   }
 
@@ -79,7 +79,7 @@ export function UsersSection() {
           ? {
               ...user,
               name: editValues.name,
-              role: editValues.role as 'admin' | 'examiner' | 'student',
+              role: editValues.role as 'admin' | 'reviewer' | 'student',
             }
           : user
       )
@@ -183,7 +183,7 @@ export function UsersSection() {
                       className="input-minimal text-sm"
                     >
                       <option value="student">Student</option>
-                      <option value="examiner">Examiner</option>
+                      <option value="reviewer">Reviewer</option>
                       <option value="admin">Admin</option>
                     </select>
                   ) : (

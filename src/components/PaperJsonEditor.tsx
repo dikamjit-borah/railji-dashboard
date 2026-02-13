@@ -19,7 +19,7 @@ interface NormalizedQuestion {
   correct: number
 }
 
-export function ExamJsonEditor({ 
+export function PaperJsonEditor({ 
   onBack,
   onNext,
   initialQuestions 
@@ -167,7 +167,7 @@ export function ExamJsonEditor({
             <div>
               <h1 className="text-2xl font-bold text-slate-950">Paper Editor</h1>
               <p className="text-sm text-slate-600 mt-1">
-                Edit exam questions and answers in JSON format
+                Edit paper questions and answers in JSON format
               </p>
             </div>
           </div>

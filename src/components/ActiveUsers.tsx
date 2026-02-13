@@ -1,7 +1,7 @@
 interface User {
   id: string
   name: string
-  role: 'admin' | 'examiner' | 'student'
+  role: 'admin' | 'reviewer' | 'student'
   lastActive: string
   status: 'online' | 'idle' | 'offline'
 }
@@ -17,14 +17,14 @@ const users: User[] = [
   {
     id: '2',
     name: 'Gurjit Ching',
-    role: 'examiner',
+    role: 'reviewer',
     lastActive: '5m ago',
     status: 'idle',
   },
   {
     id: '3',
     name: 'Amit Patel',
-    role: 'examiner',
+    role: 'reviewer',
     lastActive: '2h ago',
     status: 'offline',
   },
@@ -39,7 +39,7 @@ const users: User[] = [
 
 const roleColors = {
   admin: { bg: 'bg-slate-900', text: 'text-slate-50' },
-  examiner: { bg: 'bg-slate-700', text: 'text-slate-50' },
+  reviewer: { bg: 'bg-slate-700', text: 'text-slate-50' },
   student: { bg: 'bg-slate-200', text: 'text-slate-800' },
 }
 

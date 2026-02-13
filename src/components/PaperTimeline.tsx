@@ -2,7 +2,7 @@ import { CheckCircle2, AlertCircle } from 'lucide-react'
 
 interface TimelineItem {
   id: string
-  exam: string
+  paper: string
   status: 'draft' | 'active' | 'completed'
   daysAgo: number
 }
@@ -10,25 +10,25 @@ interface TimelineItem {
 const items: TimelineItem[] = [
   {
     id: '1',
-    exam: 'Junior Engineer',
+    paper: 'Junior Engineer',
     status: 'active',
     daysAgo: 0,
   },
   {
     id: '2',
-    exam: 'Indian Railways Technician',
+    paper: 'Indian Railways Technician',
     status: 'active',
     daysAgo: 2,
   },
   {
     id: '3',
-    exam: 'NTPC Graduate Recruitment',
+    paper: 'NTPC Graduate Recruitment',
     status: 'completed',
     daysAgo: 5,
   },
   {
     id: '4',
-    exam: 'RRB Group D - General Awareness',
+    paper: 'RRB Group D - General Awareness',
     status: 'draft',
     daysAgo: 7,
   },
@@ -55,12 +55,12 @@ const statusConfig = {
   },
 }
 
-export function ExamTimeline() {
+export function PaperTimeline() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-semibold text-slate-950">Exam Journey</h2>
-        <p className="text-sm text-slate-600 mt-1">Track your examination workflow</p>
+        <h2 className="text-lg font-semibold text-slate-950">Paper Journey</h2>
+        <p className="text-sm text-slate-600 mt-1">Track your paper workflow</p>
       </div>
 
       <div className="space-y-0">
@@ -85,7 +85,7 @@ export function ExamTimeline() {
                   <div className="flex items-start justify-between gap-4">
                     <div>
                       <p className="font-medium text-slate-950 text-sm">
-                        {item.exam}
+                        {item.paper}
                       </p>
                       <p className="text-xs text-slate-500 mt-1">
                         {item.daysAgo === 0 ? 'Today' : `${item.daysAgo}d ago`}
@@ -104,10 +104,10 @@ export function ExamTimeline() {
 
       <div className="pt-4 border-t border-slate-100">
         <a
-          href="/exams"
+          href="/papers"
           className="text-xs font-medium text-slate-700 hover:text-slate-950 inline-flex items-center gap-2 transition-colors"
         >
-          View all exams
+          View all papers
           <span className="text-slate-400">→</span>
         </a>
       </div>

@@ -3,9 +3,9 @@
 import { useState, useEffect } from 'react'
 import { Upload, Check } from 'lucide-react'
 import { PageHeader } from './PageHeader'
-import { ExamJsonEditor } from './ExamJsonEditor'
+import { PaperJsonEditor } from './PaperJsonEditor'
 
-interface ExamData {
+interface PaperData {
   paperType: 'sectional' | 'full' | 'general' | ''
   department: string
   paperCode: string
@@ -42,7 +42,7 @@ interface Department {
 
 export function UploadSection() {
   const [stage, setStage] = useState<'upload' | 'editor' | 'details'>('upload')
-  const [currentExam, setCurrentExam] = useState<ExamData>({
+  const [currentPaper, setCurrentPaper] = useState<PaperData>({
     paperType: '',
     department: '',
     paperCode: '',
@@ -72,34 +72,34 @@ export function UploadSection() {
 
   // Fetch paper codes when department or paperType changes
   useEffect(() => {
-    if (currentExam.department && currentExam.paperType !== 'general') {
-      fetchPaperCodes(currentExam.department, currentExam.paperType)
+    if (currentPaper.department && currentPaper.paperType !== 'general') {
+      fetchPaperCodes(currentPaper.department, currentPaper.paperType)
     }
-  }, [currentExam.department, currentExam.paperType])
+  }, [currentPaper.department, currentPaper.paperType])
 
   // Handle paper type changes
   useEffect(() => {
-    if (currentExam.paperType === 'general') {
+    if (currentPaper.paperType === 'general') {
       // For general papers, clear department and paper code, then fetch general codes
-      setCurrentExam((prev) => ({
+      setCurrentPaper((prev) => ({
         ...prev,
         department: '',
         paperCode: '',
       }))
       fetchGeneralPaperCodes('general')
-    } else if (currentExam.paperType === 'full' || currentExam.paperType === 'sectional') {
+    } else if (currentPaper.paperType === 'full' || currentPaper.paperType === 'sectional') {
       // For sectional/full papers, ensure departments are loaded
       if (departments.length === 0) {
         fetchDepartments()
       }
       // Clear paper codes until department is selected
       setPaperCodes([])
-      setCurrentExam((prev) => ({
+      setCurrentPaper((prev) => ({
         ...prev,
         paperCode: '',
       }))
     }
-  }, [currentExam.paperType])
+  }, [currentPaper.paperType])
 
   const fetchDepartments = async () => {
     setLoadingDepartments(true)
@@ -217,7 +217,7 @@ export function UploadSection() {
               uploadTime: 'just now',
               content: content,
             }
-            setCurrentExam({ ...currentExam, jsonFile: fileData })
+            setCurrentPaper({ ...currentPaper, jsonFile: fileData })
           } catch (error) {
             alert('Invalid JSON file. Please upload a valid JSON file.')
             console.error('JSON parse error:', error)
@@ -228,28 +228,28 @@ export function UploadSection() {
     }
   }
 
-  const isExamComplete = () => {
+  const isPaperComplete = () => {
     const baseFilled =
-      currentExam.paperType &&
-      currentExam.year &&
-      currentExam.shift &&
-      currentExam.paperName.trim() &&
-      currentExam.passMarks !== '' &&
-      currentExam.negativeMarks !== '' &&
-      currentExam.duration !== '' &&
-      currentExam.jsonFile
+      currentPaper.paperType &&
+      currentPaper.year &&
+      currentPaper.shift &&
+      currentPaper.paperName.trim() &&
+      currentPaper.passMarks !== '' &&
+      currentPaper.negativeMarks !== '' &&
+      currentPaper.duration !== '' &&
+      currentPaper.jsonFile
 
     // For general papers, department and paperCode are not required
-    if (currentExam.paperType === 'general') {
+    if (currentPaper.paperType === 'general') {
       return baseFilled
     }
 
     // For sectional and full papers, department and paperCode are required
-    return baseFilled && currentExam.department && currentExam.paperCode
+    return baseFilled && currentPaper.department && currentPaper.paperCode
   }
 
   const createPaper = async () => {
-    if (!isExamComplete()) {
+    if (!isPaperComplete()) {
       alert('Please fill all required fields')
       return
     }
@@ -257,24 +257,24 @@ export function UploadSection() {
     setCreatingPaper(true)
     try {
       // Extract questions from JSON file
-      const questions = currentExam.jsonFile?.content?.questions || []
+      const questions = currentPaper.jsonFile?.content?.questions || []
       
       // Extract sections and other metadata from JSON
       const totalQuestions = questions.length
 
       const payload = {
-        departmentId: currentExam.department || undefined,
-        paperCode: currentExam.paperCode || undefined,
-        paperType: currentExam.paperType,
-        name: currentExam.paperName,
-        description: currentExam.paperDescription,
-        year: Number(currentExam.year),
-        shift: currentExam.shift.charAt(0).toUpperCase() + currentExam.shift.slice(1),
+        departmentId: currentPaper.department || undefined,
+        paperCode: currentPaper.paperCode || undefined,
+        paperType: currentPaper.paperType,
+        name: currentPaper.paperName,
+        description: currentPaper.paperDescription,
+        year: Number(currentPaper.year),
+        shift: currentPaper.shift.charAt(0).toUpperCase() + currentPaper.shift.slice(1),
         totalQuestions,
-        passMarks: Number(currentExam.passMarks),
-        negativeMarking: Number(currentExam.negativeMarks),
-        duration: Number(currentExam.duration),
-        isFree: currentExam.isFree,
+        passMarks: Number(currentPaper.passMarks),
+        negativeMarking: Number(currentPaper.negativeMarks),
+        duration: Number(currentPaper.duration),
+        isFree: currentPaper.isFree,
         questions,
       }
 
@@ -296,7 +296,7 @@ export function UploadSection() {
       console.log('Paper created:', result)
 
       // Reset form after successful creation
-      setCurrentExam({
+      setCurrentPaper({
         paperType: '',
         department: '',
         paperCode: '',
@@ -322,8 +322,8 @@ export function UploadSection() {
   const handleAddPaperCode = () => {
     if (newPaperCode.trim()) {
       setPaperCodes([...paperCodes, newPaperCode.trim()])
-      setCurrentExam({
-        ...currentExam,
+      setCurrentPaper({
+        ...currentPaper,
         paperCode: newPaperCode.trim(),
       })
       setNewPaperCode('')
@@ -346,7 +346,7 @@ export function UploadSection() {
             uploadTime: 'just now',
             content: content,
           }
-          setCurrentExam({ ...currentExam, jsonFile: fileData })
+          setCurrentPaper({ ...currentPaper, jsonFile: fileData })
         } catch (error) {
           alert('Invalid JSON file. Please upload a valid JSON file.')
           console.error('JSON parse error:', error)
@@ -360,20 +360,20 @@ export function UploadSection() {
   return (
     <>
       {stage === 'editor' ? (
-        <ExamJsonEditor
+        <PaperJsonEditor
           onBack={() => setStage('upload')}
           onNext={(updatedData) => {
             // Update the jsonFile content with the edited data
-            setCurrentExam({
-              ...currentExam,
-              jsonFile: currentExam.jsonFile ? {
-                ...currentExam.jsonFile,
+            setCurrentPaper({
+              ...currentPaper,
+              jsonFile: currentPaper.jsonFile ? {
+                ...currentPaper.jsonFile,
                 content: updatedData
               } : null
             })
             setStage('details')
           }}
-          initialQuestions={currentExam.jsonFile?.content}
+          initialQuestions={currentPaper.jsonFile?.content}
         />
       ) : stage === 'details' ? (
         <div className="ml-56 bg-slate-50 min-h-screen">
@@ -389,10 +389,10 @@ export function UploadSection() {
                   Paper Type <span className="text-red-500">*</span>
                 </label>
                 <select
-                  value={currentExam.paperType}
+                  value={currentPaper.paperType}
                   onChange={(e) =>
-                    setCurrentExam({
-                      ...currentExam,
+                    setCurrentPaper({
+                      ...currentPaper,
                       paperType: e.target.value as 'sectional' | 'full' | 'general' | '',
                     })
                   }
@@ -411,21 +411,21 @@ export function UploadSection() {
                   Department <span className="text-red-500">*</span>
                 </label>
                 <select
-                  value={currentExam.department}
+                  value={currentPaper.department}
                   onChange={(e) =>
-                    setCurrentExam({
-                      ...currentExam,
+                    setCurrentPaper({
+                      ...currentPaper,
                       department: e.target.value,
                       paperCode: '',
                     })
                   }
-                  disabled={!currentExam.paperType || currentExam.paperType === 'general' || loadingDepartments}
+                  disabled={!currentPaper.paperType || currentPaper.paperType === 'general' || loadingDepartments}
                   className="input-minimal w-full disabled:opacity-50"
                 >
                   <option value="">
-                    {!currentExam.paperType
+                    {!currentPaper.paperType
                       ? 'Select paper type first'
-                      : currentExam.paperType === 'general'
+                      : currentPaper.paperType === 'general'
                         ? 'Not applicable for General papers'
                         : loadingDepartments
                           ? 'Loading departments...'
@@ -445,28 +445,28 @@ export function UploadSection() {
                   Section Code <span className="text-red-500">*</span>
                 </label>
                 <select
-                  value={currentExam.paperCode}
+                  value={currentPaper.paperCode}
                   onChange={(e) => {
                     if (e.target.value === '__add_new__') {
                       setShowAddPaperCodeModal(true)
                     } else {
-                      setCurrentExam({
-                        ...currentExam,
+                      setCurrentPaper({
+                        ...currentPaper,
                         paperCode: e.target.value,
                       })
                     }
                   }}
                   disabled={
-                    !currentExam.paperType ||
-                    (currentExam.paperType !== 'general' && !currentExam.department) ||
+                    !currentPaper.paperType ||
+                    (currentPaper.paperType !== 'general' && !currentPaper.department) ||
                     loadingCodes
                   }
                   className="input-minimal w-full disabled:opacity-50"
                 >
                   <option value="">
-                    {!currentExam.paperType
+                    {!currentPaper.paperType
                       ? 'Select paper type first'
-                      : currentExam.paperType !== 'general' && !currentExam.department
+                      : currentPaper.paperType !== 'general' && !currentPaper.department
                         ? 'Select department first'
                         : loadingCodes
                           ? 'Loading codes...'
@@ -491,10 +491,10 @@ export function UploadSection() {
                   placeholder="e.g., 2024"
                   min="2000"
                   max="2100"
-                  value={currentExam.year}
+                  value={currentPaper.year}
                   onChange={(e) =>
-                    setCurrentExam({
-                      ...currentExam,
+                    setCurrentPaper({
+                      ...currentPaper,
                       year: e.target.value,
                     })
                   }
@@ -508,10 +508,10 @@ export function UploadSection() {
                   Shift <span className="text-red-500">*</span>
                 </label>
                 <select
-                  value={currentExam.shift}
+                  value={currentPaper.shift}
                   onChange={(e) =>
-                    setCurrentExam({
-                      ...currentExam,
+                    setCurrentPaper({
+                      ...currentPaper,
                       shift: e.target.value as 'morning' | 'afternoon' | 'evening' | 'night' | '',
                     })
                   }
@@ -533,10 +533,10 @@ export function UploadSection() {
                 <input
                   type="text"
                   placeholder="Enter paper name"
-                  value={currentExam.paperName}
+                  value={currentPaper.paperName}
                   onChange={(e) =>
-                    setCurrentExam({
-                      ...currentExam,
+                    setCurrentPaper({
+                      ...currentPaper,
                       paperName: e.target.value,
                     })
                   }
@@ -551,10 +551,10 @@ export function UploadSection() {
                 </label>
                 <textarea
                   placeholder="Enter paper description"
-                  value={currentExam.paperDescription}
+                  value={currentPaper.paperDescription}
                   onChange={(e) =>
-                    setCurrentExam({
-                      ...currentExam,
+                    setCurrentPaper({
+                      ...currentPaper,
                       paperDescription: e.target.value,
                     })
                   }
@@ -573,10 +573,10 @@ export function UploadSection() {
                     type="number"
                     placeholder="e.g., 40"
                     min="0"
-                    value={currentExam.passMarks}
+                    value={currentPaper.passMarks}
                     onChange={(e) =>
-                      setCurrentExam({
-                        ...currentExam,
+                      setCurrentPaper({
+                        ...currentPaper,
                         passMarks: e.target.value ? Number(e.target.value) : '',
                       })
                     }
@@ -592,10 +592,10 @@ export function UploadSection() {
                     placeholder="e.g., 0.25"
                     step="0.01"
                     min="0"
-                    value={currentExam.negativeMarks}
+                    value={currentPaper.negativeMarks}
                     onChange={(e) =>
-                      setCurrentExam({
-                        ...currentExam,
+                      setCurrentPaper({
+                        ...currentPaper,
                         negativeMarks: e.target.value ? Number(e.target.value) : '',
                       })
                     }
@@ -613,10 +613,10 @@ export function UploadSection() {
                   type="number"
                   placeholder="e.g., 90"
                   min="1"
-                  value={currentExam.duration}
+                  value={currentPaper.duration}
                   onChange={(e) =>
-                    setCurrentExam({
-                      ...currentExam,
+                    setCurrentPaper({
+                      ...currentPaper,
                       duration: e.target.value ? Number(e.target.value) : '',
                     })
                   }
@@ -629,10 +629,10 @@ export function UploadSection() {
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
-                    checked={currentExam.isFree}
+                    checked={currentPaper.isFree}
                     onChange={(e) =>
-                      setCurrentExam({
-                        ...currentExam,
+                      setCurrentPaper({
+                        ...currentPaper,
                         isFree: e.target.checked,
                       })
                     }
@@ -652,9 +652,9 @@ export function UploadSection() {
                 </button>
                 <button
                   onClick={createPaper}
-                  disabled={!isExamComplete() || creatingPaper}
+                  disabled={!isPaperComplete() || creatingPaper}
                   className={`flex-1 py-2 px-4 rounded font-medium transition-all ${
-                    isExamComplete() && !creatingPaper
+                    isPaperComplete() && !creatingPaper
                       ? 'btn-minimal-primary'
                       : 'btn-minimal-primary opacity-50 cursor-not-allowed'
                   }`}
@@ -687,21 +687,21 @@ export function UploadSection() {
                     isDragActive === 'question'
                       ? 'border-slate-900 bg-slate-100'
                       : 'border-slate-300 hover:border-slate-400 hover:bg-slate-50'
-                  } ${currentExam.jsonFile ? 'bg-green-50 border-green-300' : ''}`}
+                  } ${currentPaper.jsonFile ? 'bg-green-50 border-green-300' : ''}`}
                 >
-                  {currentExam.jsonFile ? (
+                  {currentPaper.jsonFile ? (
                     <div className="text-center">
                       <Check className="w-8 h-8 text-green-600 mx-auto mb-2" />
                       <p className="text-sm font-medium text-green-900">
-                        {currentExam.jsonFile.name}
+                        {currentPaper.jsonFile.name}
                       </p>
                       <p className="text-xs text-green-700 mt-1">
-                        {currentExam.jsonFile.size}
+                        {currentPaper.jsonFile.size}
                       </p>
                       <button
                         onClick={() =>
-                          setCurrentExam({
-                            ...currentExam,
+                          setCurrentPaper({
+                            ...currentPaper,
                             jsonFile: null,
                           })
                         }
@@ -743,13 +743,13 @@ export function UploadSection() {
               {/* Button */}
               <button
                 onClick={() => {
-                  if (currentExam.jsonFile) {
+                  if (currentPaper.jsonFile) {
                     setStage('editor')
                   }
                 }}
-                disabled={!currentExam.jsonFile}
+                disabled={!currentPaper.jsonFile}
                 className={`w-full py-2 px-4 rounded font-medium transition-all ${
-                  currentExam.jsonFile
+                  currentPaper.jsonFile
                     ? 'btn-minimal-primary'
                     : 'btn-minimal-primary opacity-50 cursor-not-allowed'
                 }`}
