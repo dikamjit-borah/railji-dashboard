@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import { ArrowLeft, Plus, Trash2, Copy, Check } from 'lucide-react'
 
 interface Question {
@@ -30,21 +30,14 @@ export function PaperJsonEditor({
 }) {
   // Normalize the questions data for editing
   const normalizeQuestions = (data: any): NormalizedQuestion[] => {
-    // if (!data) return {}
+    const questionsArray = Array.isArray(data) ? data : data?.questions || []
     
-    // If data has a questions property, use that
-    const questionsArray = Array.isArray(data) ? data : data.questions || []
-    
-    // Transform each question to the expected format for editing
     return questionsArray.map((q: any) => {
-      let correctValue = 0 // Default to 0 (first option)
+      let correctValue = 0
       
-      // If correct is already a number, use it
       if (typeof q.correct === 'number') {
         correctValue = q.correct
-      } 
-      // If correct is a string, find the matching option index
-      else if (typeof q.correct === 'string' && q.options) {
+      } else if (typeof q.correct === 'string' && q.options) {
         const foundIndex = q.options.findIndex((opt: any) => opt.en === q.correct)
         correctValue = foundIndex >= 0 ? foundIndex : 0
       }
@@ -58,53 +51,94 @@ export function PaperJsonEditor({
     })
   }
 
-  const [originalData, setOriginalData] = useState<any>(initialQuestions)
   const [questions, setQuestions] = useState<NormalizedQuestion[]>(normalizeQuestions(initialQuestions))
-  const [jsonText, setJsonText] = useState<string>(JSON.stringify(originalData, null, 2))
   const [copied, setCopied] = useState(false)
+  const [expandedIndex, setExpandedIndex] = useState<number | null>(null)
+  
+  // Use refs to store pending updates without triggering re-renders
+  const pendingUpdatesRef = useRef<Map<string, any>>(new Map())
+  const updateTimerRef = useRef<NodeJS.Timeout | null>(null)
 
-  // Sync questions to JSON when questions change
-  const syncQuestionsToJson = (updatedQuestions: NormalizedQuestion[]) => {
-    setQuestions(updatedQuestions)
+  // Batch updates to reduce re-renders
+  const scheduleUpdate = useCallback((key: string, value: any) => {
+    pendingUpdatesRef.current.set(key, value)
     
-    // Update the original data structure
-    const updated = originalData && originalData.questions 
+    if (updateTimerRef.current) {
+      clearTimeout(updateTimerRef.current)
+    }
+    
+    updateTimerRef.current = setTimeout(() => {
+      const updates = new Map(pendingUpdatesRef.current)
+      pendingUpdatesRef.current.clear()
+      
+      setQuestions(prev => {
+        let newQuestions = [...prev]
+        
+        updates.forEach((value, key) => {
+          const [type, qIndex, ...rest] = key.split('-')
+          const questionIndex = parseInt(qIndex)
+          
+          if (type === 'question') {
+            const lang = rest[0] as 'en' | 'hi'
+            newQuestions[questionIndex] = {
+              ...newQuestions[questionIndex],
+              question: {
+                ...newQuestions[questionIndex].question,
+                [lang]: value
+              }
+            }
+          } else if (type === 'option') {
+            const optionIndex = parseInt(rest[0])
+            const lang = rest[1] as 'en' | 'hi'
+            const updatedQuestion = { ...newQuestions[questionIndex] }
+            updatedQuestion.options = [...updatedQuestion.options]
+            updatedQuestion.options[optionIndex] = {
+              ...updatedQuestion.options[optionIndex],
+              [lang]: value
+            }
+            newQuestions[questionIndex] = updatedQuestion
+          }
+        })
+        
+        return newQuestions
+      })
+    }, 100)
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      if (updateTimerRef.current) {
+        clearTimeout(updateTimerRef.current)
+      }
+    }
+  }, [])
+
+  // Memoize the original data structure
+  const originalData = useMemo(() => {
+    const hasQuestionsWrapper = initialQuestions && !Array.isArray(initialQuestions) && 'questions' in initialQuestions
+    
+    return hasQuestionsWrapper
       ? {
-          ...originalData,
-          questions: updatedQuestions.map((q, index) => ({
-            id: q.id || (originalData.questions[index]?.id),
+          ...initialQuestions,
+          questions: questions.map((q, index) => ({
+            id: q.id || ((initialQuestions as any).questions[index]?.id),
             question: q.question,
             options: q.options,
             correct: q.correct,
           })),
         }
-      : updatedQuestions.map((q, index) => ({
+      : questions.map((q, index) => ({
           id: q.id || index + 1,
           question: q.question,
           options: q.options,
           correct: q.correct,
         }))
-    
-    setOriginalData(updated)
-    setJsonText(JSON.stringify(updated, null, 2))
-  }
+  }, [questions, initialQuestions])
 
-  // Parse JSON and sync to questions
-  const syncJsonToQuestions = (jsonStr: string) => {
-    setJsonText(jsonStr)
-    try {
-      const parsed = JSON.parse(jsonStr)
-      setOriginalData(parsed)
-      const normalized = normalizeQuestions(parsed)
-      setQuestions(normalized)
-    } catch (error) {
-      // Invalid JSON, just update the text
-    }
-  }
+  // Memoize JSON text
+  const jsonText = useMemo(() => JSON.stringify(originalData, null, 2), [originalData])
 
-  const [expandedIndex, setExpandedIndex] = useState<number | null>(null)
-
-  const addQuestion = () => {
+  const addQuestion = useCallback(() => {
     const newQuestion: NormalizedQuestion = {
       id: questions.length + 1,
       question: { en: 'New Question', hi: 'नया प्रश्न' },
@@ -116,41 +150,36 @@ export function PaperJsonEditor({
       ],
       correct: 0,
     }
-    syncQuestionsToJson([...questions, newQuestion])
-  }
+    setQuestions(prev => [...prev, newQuestion])
+  }, [questions.length])
 
-  const updateQuestion = (index: number, updatedQuestion: NormalizedQuestion) => {
-    const newQuestions = [...questions]
-    newQuestions[index] = updatedQuestion
-    syncQuestionsToJson(newQuestions)
-  }
+  const updateQuestion = useCallback((index: number, field: 'correct', value: number) => {
+    setQuestions(prev => {
+      const newQuestions = [...prev]
+      newQuestions[index] = { ...newQuestions[index], [field]: value }
+      return newQuestions
+    })
+  }, [])
 
-  const deleteQuestion = (index: number) => {
-    syncQuestionsToJson(questions.filter((_, i) => i !== index))
-  }
+  const deleteQuestion = useCallback((index: number) => {
+    setQuestions(prev => prev.filter((_, i) => i !== index))
+  }, [])
 
-  const updateOption = (qIndex: number, oIndex: number, lang: 'en' | 'hi', value: string) => {
-    const updatedQuestion = { ...questions[qIndex] }
-    updatedQuestion.options[oIndex][lang] = value
-    updateQuestion(qIndex, updatedQuestion)
-  }
+  const updateOption = useCallback((qIndex: number, oIndex: number, lang: 'en' | 'hi', value: string) => {
+    scheduleUpdate(`option-${qIndex}-${oIndex}-${lang}`, value)
+  }, [scheduleUpdate])
 
-  const copyToClipboard = () => {
+  const updateQuestionText = useCallback((qIndex: number, lang: 'en' | 'hi', value: string) => {
+    scheduleUpdate(`question-${qIndex}-${lang}`, value)
+  }, [scheduleUpdate])
+
+  const copyToClipboard = useCallback(() => {
     navigator.clipboard.writeText(jsonText)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
-  }
+  }, [jsonText])
 
-  // Get the current updated data to send
-  const getCurrentData = () => {
-    try {
-      // Try to parse the current JSON text first (in case user edited it directly)
-      return JSON.parse(jsonText)
-    } catch {
-      // If JSON is invalid, return the originalData state
-      return originalData
-    }
-  }
+  const getCurrentData = useCallback(() => originalData, [originalData])
 
   return (
     <div className="fixed inset-0 ml-56 bg-slate-50 flex flex-col">
@@ -255,14 +284,8 @@ export function PaperJsonEditor({
                         <input
                           id={`ques-${qIndex}`}
                           type="text"
-                          value={question.question.en}
-                          onChange={(e) => {
-                            const updated = { 
-                              ...question, 
-                              question: { ...question.question, en: e.target.value }
-                            }
-                            updateQuestion(qIndex, updated)
-                          }}
+                          defaultValue={question.question.en}
+                          onChange={(e) => updateQuestionText(qIndex, 'en', e.target.value)}
                           className="w-full px-3 py-2 border border-slate-200 rounded-lg text-slate-950 focus:outline-none focus:border-slate-400"
                         />
                       </div>
@@ -276,14 +299,8 @@ export function PaperJsonEditor({
                         <input
                           id={`ques-hi-${qIndex}`}
                           type="text"
-                          value={question.question.hi}
-                          onChange={(e) => {
-                            const updated = { 
-                              ...question, 
-                              question: { ...question.question, hi: e.target.value }
-                            }
-                            updateQuestion(qIndex, updated)
-                          }}
+                          defaultValue={question.question.hi}
+                          onChange={(e) => updateQuestionText(qIndex, 'hi', e.target.value)}
                           className="w-full px-3 py-2 border border-slate-200 rounded-lg text-slate-950 focus:outline-none focus:border-slate-400"
                         />
                       </div>
@@ -311,7 +328,7 @@ export function PaperJsonEditor({
                               <input
                                 type="text"
                                 placeholder="English"
-                                value={option.en}
+                                defaultValue={option.en}
                                 onChange={(e) =>
                                   updateOption(qIndex, oIndex, 'en', e.target.value)
                                 }
@@ -327,7 +344,7 @@ export function PaperJsonEditor({
                               <input
                                 type="text"
                                 placeholder="Hindi"
-                                value={option.hi}
+                                defaultValue={option.hi}
                                 onChange={(e) =>
                                   updateOption(qIndex, oIndex, 'hi', e.target.value)
                                 }
@@ -352,11 +369,7 @@ export function PaperJsonEditor({
                         value={String.fromCharCode(65 + question.correct)}
                         onChange={(e) => {
                           const selectedIndex = e.target.value.charCodeAt(0) - 65
-                          const updated = {
-                            ...question,
-                            correct: selectedIndex,
-                          }
-                          updateQuestion(qIndex, updated)
+                          updateQuestion(qIndex, 'correct', selectedIndex)
                         }}
                         className="w-full px-3 py-2 border border-slate-200 rounded-lg text-slate-950 focus:outline-none focus:border-slate-400"
                       >
@@ -397,12 +410,12 @@ export function PaperJsonEditor({
         {/* JSON Preview */}
         <div className="w-1/3 bg-white border-l border-slate-200 p-4 flex flex-col overflow-hidden">
           <h3 className="text-sm font-semibold text-slate-950 mb-3">
-            JSON Preview (Editable)
+            JSON Preview (Read-only)
           </h3>
           <textarea
             value={jsonText}
-            onChange={(e) => syncJsonToQuestions(e.target.value)}
-            className="bg-slate-900 rounded-lg p-3 overflow-auto flex-1 text-xs font-mono text-slate-100 resize-none focus:outline-none focus:ring-2 focus:ring-slate-400"
+            readOnly
+            className="bg-slate-900 rounded-lg p-3 overflow-auto flex-1 text-xs font-mono text-slate-100 resize-none focus:outline-none"
           />
           <button
             onClick={copyToClipboard}

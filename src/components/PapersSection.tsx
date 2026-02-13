@@ -1,239 +1,294 @@
 'use client'
 
-import { useState } from 'react'
-import { Edit2, Trash2, Plus } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { Trash2, ChevronDown, ChevronRight, Loader2, AlertCircle } from 'lucide-react'
 import { PageHeader } from './PageHeader'
+import { useRouter } from 'next/navigation'
+
+interface Department {
+  departmentId: string
+  name: string
+  description?: string
+}
 
 interface Paper {
-  id: string
+  _id: string
+  paperId: string
+  paperCode: string | null
   name: string
-  status: 'draft' | 'active' | 'completed'
-  totalQuestions: number
-  createdDate: string
-  editingId?: string
+  description?: string
+  departmentId: string
+  year?: number
+  shift?: string
+  zones?: string
+  examType?: string
+  totalQuestions?: number
+  duration?: number
+  passMarks?: number
+  negativeMarking?: number
+  rating?: number
+  isFree?: boolean
+  isNew?: boolean
+  paperType?: string
+  usersAttempted?: number
+  createdAt?: string
+  updatedAt?: string
 }
 
 export function PapersSection() {
-  const [papers, setPapers] = useState<Paper[]>([
-    {
-      id: '1',
-      name: 'Junior Engineer',
-      status: 'active',
-      totalQuestions: 100,
-      createdDate: '2024-01-05',
-    },
-    {
-      id: '2',
-      name: 'Indian Railways Technician',
-      status: 'active',
-      totalQuestions: 150,
-      createdDate: '2024-01-02',
-    },
-    {
-      id: '3',
-      name: 'NTPC Graduate Recruitment',
-      status: 'completed',
-      totalQuestions: 200,
-      createdDate: '2023-12-20',
-    },
-    {
-      id: '4',
-      name: 'RRB Group D - General Awareness',
-      status: 'draft',
-      totalQuestions: 80,
-      createdDate: '2024-01-10',
-    },
-  ])
+  const router = useRouter()
+  const [departments, setDepartments] = useState<Department[]>([])
+  const [papersByDept, setPapersByDept] = useState<Record<string, Paper[]>>({})
+  const [expandedDepts, setExpandedDepts] = useState<Set<string>>(new Set())
+  const [loadingDepts, setLoadingDepts] = useState(true)
+  const [loadingPapers, setLoadingPapers] = useState<Set<string>>(new Set())
+  const [error, setError] = useState<string | null>(null)
+  const [deletingPaper, setDeletingPaper] = useState<string | null>(null)
+  const hasFetched = useRef(false)
 
-  const [editingId, setEditingId] = useState<string | null>(null)
-  const [editValues, setEditValues] = useState<{ name: string; questions: string }>({
-    name: '',
-    questions: '',
-  })
-
-  const statusStyles = {
-    draft: 'bg-slate-100 text-slate-700',
-    active: 'bg-slate-900 text-slate-50',
-    completed: 'bg-slate-200 text-slate-700',
-  }
-
-  const handleEdit = (paper: Paper) => {
-    setEditingId(paper.id)
-    setEditValues({
-      name: paper.name,
-      questions: paper.totalQuestions.toString(),
-    })
-  }
-
-  const handleSaveEdit = (id: string) => {
-    setPapers(
-      papers.map((paper) =>
-        paper.id === id
-          ? {
-              ...paper,
-              name: editValues.name,
-              totalQuestions: parseInt(editValues.questions) || 0,
-            }
-          : paper
-      )
-    )
-    setEditingId(null)
-  }
-
-  const handleDelete = (id: string) => {
-    setPapers(papers.filter((paper) => paper.id !== id))
-  }
-
-  const handleAddNew = () => {
-    const newPaper: Paper = {
-      id: Math.random().toString(36).substr(2, 9),
-      name: 'New Paper',
-      status: 'draft',
-      totalQuestions: 0,
-      createdDate: new Date().toISOString().split('T')[0],
+  useEffect(() => {
+    if (!hasFetched.current) {
+      hasFetched.current = true
+      fetchDepartments()
     }
-    setPapers([newPaper, ...papers])
-    handleEdit(newPaper)
+  }, [])
+
+  const fetchDepartments = async () => {
+    setLoadingDepts(true)
+    setError(null)
+    try {
+      const response = await fetch('https://railji-business.onrender.com/business/v1/departments')
+      if (!response.ok) throw new Error('Failed to fetch departments')
+      const data = await response.json()
+      
+      // Handle different response formats
+      let depts: Department[] = []
+      if (Array.isArray(data)) {
+        depts = data
+      } else if (data.data && Array.isArray(data.data)) {
+        depts = data.data
+      } else if (data.departments && Array.isArray(data.departments)) {
+        depts = data.departments
+      } else {
+        console.error('Unexpected response format:', data)
+        depts = []
+      }
+      
+      setDepartments(depts)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load departments')
+    } finally {
+      setLoadingDepts(false)
+    }
+  }
+
+  const fetchPapersForDept = async (deptId: string) => {
+    if (papersByDept[deptId]) return // Already loaded
+    
+    setLoadingPapers(prev => new Set(prev).add(deptId))
+    try {
+      const response = await fetch(`https://railji-business.onrender.com/business/v1/papers/${deptId}`)
+      if (!response.ok) throw new Error('Failed to fetch papers')
+      const result = await response.json()
+      
+      // Extract papers from nested response structure
+      let papers: Paper[] = []
+      if (result.data && result.data.papers && Array.isArray(result.data.papers)) {
+        papers = result.data.papers
+      } else if (result.papers && Array.isArray(result.papers)) {
+        papers = result.papers
+      } else if (Array.isArray(result.data)) {
+        papers = result.data
+      } else if (Array.isArray(result)) {
+        papers = result
+      }
+      
+      setPapersByDept(prev => ({ ...prev, [deptId]: papers }))
+    } catch (err) {
+      console.error(`Failed to load papers for ${deptId}:`, err)
+      setPapersByDept(prev => ({ ...prev, [deptId]: [] }))
+    } finally {
+      setLoadingPapers(prev => {
+        const next = new Set(prev)
+        next.delete(deptId)
+        return next
+      })
+    }
+  }
+
+  const toggleDepartment = (deptId: string) => {
+    const newExpanded = new Set(expandedDepts)
+    if (newExpanded.has(deptId)) {
+      newExpanded.delete(deptId)
+    } else {
+      newExpanded.add(deptId)
+      fetchPapersForDept(deptId)
+    }
+    setExpandedDepts(newExpanded)
+  }
+
+  const handleDeletePaper = async (paperId: string, deptId: string) => {
+    if (!confirm('Are you sure you want to delete this paper?')) return
+    
+    setDeletingPaper(paperId)
+    try {
+      const response = await fetch(`https://railji-business.onrender.com/business/v1/papers/${paperId}`, {
+        method: 'DELETE',
+      })
+      if (!response.ok) throw new Error('Failed to delete paper')
+      
+      // Remove from local state
+      setPapersByDept(prev => ({
+        ...prev,
+        [deptId]: prev[deptId].filter(p => p._id !== paperId)
+      }))
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to delete paper')
+    } finally {
+      setDeletingPaper(null)
+    }
+  }
+
+  const handleViewPaper = (paperId: string, departmentId: string) => {
+    router.push(`/papers/${departmentId}/${paperId}`)
+  }
+
+  if (loadingDepts) {
+    return (
+      <div className="bg-slate-50 min-h-screen">
+        <PageHeader title="Papers" subtitle="Manage papers by department" />
+        <div className="px-4 md:px-8 py-12 flex items-center justify-center">
+          <Loader2 className="w-6 h-6 animate-spin text-slate-400" />
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="bg-slate-50 min-h-screen">
+        <PageHeader title="Papers" subtitle="Manage papers by department" />
+        <div className="px-4 md:px-8 py-12">
+          <div className="bg-red-50 border border-red-200 rounded p-4 flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-medium text-red-900">Error loading departments</p>
+              <p className="text-sm text-red-700 mt-1">{error}</p>
+              <button
+                onClick={fetchDepartments}
+                className="text-sm text-red-700 underline mt-2 hover:text-red-900"
+              >
+                Try again
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
     <div className="bg-slate-50 min-h-screen">
-      <PageHeader
-        title="Papers"
-        subtitle="Manage papers and details"
-        action={{
-          label: 'New Paper',
-          onClick: handleAddNew,
-        }}
-      />
+      <PageHeader title="Papers" subtitle="Manage papers by department" />
 
       <div className="px-4 md:px-8 py-8 md:py-12">
-        <div className="space-y-4">
-          {papers.map((paper) => (
-            <div
-              key={paper.id}
-              className="bg-white border border-slate-200 overflow-hidden hover:border-slate-300 transition-colors"
-            >
-              {/* Header */}
-              <div className="px-6 py-4 flex items-center justify-between bg-slate-50 border-b border-slate-100">
-                <div className="flex-1 min-w-0">
-                  {editingId === paper.id ? (
-                    <input
-                      type="text"
-                      value={editValues.name}
-                      onChange={(e) =>
-                        setEditValues({ ...editValues, name: e.target.value })
-                      }
-                      className="input-minimal"
-                    />
-                  ) : (
-                    <h3 className="font-medium text-slate-950 truncate">
-                      {paper.name}
-                    </h3>
-                  )}
-                </div>
-                <span
-                  className={`text-xs font-medium px-2 py-1 rounded ml-4 capitalize whitespace-nowrap ${
-                    statusStyles[paper.status]
-                  }`}
-                >
-                  {paper.status}
-                </span>
-              </div>
+        <div className="space-y-3">
+          {departments.map((dept) => {
+            const isExpanded = expandedDepts.has(dept.departmentId)
+            const papers = papersByDept[dept.departmentId] || []
+            const isLoadingPapers = loadingPapers.has(dept.departmentId)
 
-              {/* Details */}
-              <div className="px-6 py-4 space-y-3">
-                <div className="grid grid-cols-3 gap-8">
-                  <div>
-                    <p className="text-xs text-slate-600 mb-1">Total Questions</p>
-                    {editingId === paper.id ? (
-                      <input
-                        type="number"
-                        value={editValues.questions}
-                        onChange={(e) =>
-                          setEditValues({
-                            ...editValues,
-                            questions: e.target.value,
-                          })
-                        }
-                        className="input-minimal"
-                      />
+            return (
+              <div key={dept.departmentId} className="bg-white border border-slate-200 overflow-hidden">
+                {/* Department Header */}
+                <button
+                  onClick={() => toggleDepartment(dept.departmentId)}
+                  className="w-full px-6 py-4 flex items-center justify-between bg-slate-50 hover:bg-slate-100 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    {isExpanded ? (
+                      <ChevronDown className="w-5 h-5 text-slate-600" />
                     ) : (
-                      <p className="font-medium text-slate-950">
-                        {paper.totalQuestions}
-                      </p>
+                      <ChevronRight className="w-5 h-5 text-slate-600" />
                     )}
-                  </div>
-                  <div>
-                    <p className="text-xs text-slate-600 mb-1">Created Date</p>
-                    <p className="font-medium text-slate-950">{paper.createdDate}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-slate-600 mb-1">Actions</p>
-                    <div className="flex gap-2">
-                      {editingId === paper.id ? (
-                        <>
-                          <button
-                            onClick={() => handleSaveEdit(paper.id)}
-                            className="text-xs font-medium text-slate-700 hover:text-slate-950 transition-colors px-2 py-1 border border-slate-300 hover:border-slate-400"
-                          >
-                            Save
-                          </button>
-                          <button
-                            onClick={() => setEditingId(null)}
-                            className="text-xs font-medium text-slate-500 hover:text-slate-700 transition-colors px-2 py-1"
-                          >
-                            Cancel
-                          </button>
-                        </>
-                      ) : (
-                        <>
-                          <button
-                            onClick={() => handleEdit(paper)}
-                            className="text-slate-500 hover:text-slate-700 transition-colors p-1"
-                          >
-                            <Edit2 className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(paper.id)}
-                            className="text-slate-500 hover:text-slate-700 transition-colors p-1"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </>
+                    <div className="text-left">
+                      <h3 className="font-medium text-slate-950">{dept.name}</h3>
+                      {dept.description && (
+                        <p className="text-sm text-slate-600 mt-0.5">{dept.description}</p>
                       )}
                     </div>
                   </div>
-                </div>
-              </div>
-
-              {/* Track divider */}
-              <div className="h-px bg-slate-100"></div>
-
-              {/* Footer with additional options */}
-              <div className="px-6 py-3 flex gap-2 text-xs">
-                <button className="text-slate-600 hover:text-slate-950 transition-colors">
-                  View Details
+                  <span className="text-xs text-slate-500 bg-slate-200 px-2 py-1 rounded">
+                    {papers.length} {papers.length === 1 ? 'paper' : 'papers'}
+                  </span>
                 </button>
-                <span className="text-slate-300">•</span>
-                <button className="text-slate-600 hover:text-slate-950 transition-colors">
-                  Duplicate
-                </button>
+
+                {/* Papers List */}
+                {isExpanded && (
+                  <div className="border-t border-slate-200">
+                    {isLoadingPapers ? (
+                      <div className="px-6 py-8 flex items-center justify-center">
+                        <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
+                      </div>
+                    ) : papers.length === 0 ? (
+                      <div className="px-6 py-8 text-center text-sm text-slate-500">
+                        No papers found in this department
+                      </div>
+                    ) : (
+                      <div className="divide-y divide-slate-100">
+                        {papers.map((paper) => (
+                          <div
+                            key={paper._id}
+                            className="px-6 py-4 hover:bg-slate-50 transition-colors flex items-center justify-between group"
+                          >
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-medium text-slate-950 truncate">{paper.name}</h4>
+                              <div className="flex items-center gap-4 mt-2 text-xs text-slate-500">
+                                {paper.paperCode && (
+                                  <span>Code: {paper.paperCode}</span>
+                                )}
+                                {paper.paperType && (
+                                  <span className="capitalize">{paper.paperType}</span>
+                                )}
+                                {paper.updatedAt && (
+                                  <span>Updated {new Date(paper.updatedAt).toLocaleDateString()}</span>
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2 ml-4">
+                              <button
+                                onClick={() => handleViewPaper(paper.paperId, paper.departmentId)}
+                                className="text-sm text-slate-600 hover:text-slate-950 transition-colors px-3 py-1.5 border border-slate-300 hover:border-slate-400"
+                              >
+                                View Details
+                              </button>
+                              <button
+                                onClick={() => handleDeletePaper(paper._id, dept.departmentId)}
+                                disabled={deletingPaper === paper._id}
+                                className="text-slate-400 hover:text-red-600 transition-colors p-1.5 disabled:opacity-50"
+                                title="Delete paper"
+                              >
+                                {deletingPaper === paper._id ? (
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                  <Trash2 className="w-4 h-4" />
+                                )}
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
 
-        {papers.length === 0 && (
+        {departments.length === 0 && (
           <div className="text-center py-12">
-            <p className="text-slate-600 mb-4">No papers created yet</p>
-            <button
-              onClick={handleAddNew}
-              className="btn-minimal-primary inline-flex items-center gap-2"
-            >
-              <Plus className="w-4 h-4" />
-              Create First Paper
-            </button>
+            <p className="text-slate-600">No departments found</p>
           </div>
         )}
       </div>
