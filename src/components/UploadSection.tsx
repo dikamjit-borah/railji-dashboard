@@ -362,7 +362,17 @@ export function UploadSection() {
       {stage === 'editor' ? (
         <ExamJsonEditor
           onBack={() => setStage('upload')}
-          onNext={() => setStage('details')}
+          onNext={(updatedData) => {
+            // Update the jsonFile content with the edited data
+            setCurrentExam({
+              ...currentExam,
+              jsonFile: currentExam.jsonFile ? {
+                ...currentExam.jsonFile,
+                content: updatedData
+              } : null
+            })
+            setStage('details')
+          }}
           initialQuestions={currentExam.jsonFile?.content}
         />
       ) : stage === 'details' ? (

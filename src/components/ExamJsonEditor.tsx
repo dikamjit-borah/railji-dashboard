@@ -25,7 +25,7 @@ export function ExamJsonEditor({
   initialQuestions 
 }: { 
   readonly onBack: () => void
-  readonly onNext?: () => void
+  readonly onNext?: (updatedData: any) => void
   readonly initialQuestions?: Question[] | { questions: Question[] }
 }) {
   // Normalize the questions data for editing
@@ -68,19 +68,25 @@ export function ExamJsonEditor({
     setQuestions(updatedQuestions)
     
     // Update the original data structure
-    if (originalData && originalData.questions) {
-      const updated = {
-        ...originalData,
-        questions: updatedQuestions.map((q, index) => ({
-          id: q.id || (originalData.questions[index]?.id),
+    const updated = originalData && originalData.questions 
+      ? {
+          ...originalData,
+          questions: updatedQuestions.map((q, index) => ({
+            id: q.id || (originalData.questions[index]?.id),
+            question: q.question,
+            options: q.options,
+            correct: q.correct,
+          })),
+        }
+      : updatedQuestions.map((q, index) => ({
+          id: q.id || index + 1,
           question: q.question,
           options: q.options,
           correct: q.correct,
-        })),
-      }
-      setOriginalData(updated)
-      setJsonText(JSON.stringify(updated, null, 2))
-    }
+        }))
+    
+    setOriginalData(updated)
+    setJsonText(JSON.stringify(updated, null, 2))
   }
 
   // Parse JSON and sync to questions
@@ -135,6 +141,17 @@ export function ExamJsonEditor({
     setTimeout(() => setCopied(false), 2000)
   }
 
+  // Get the current updated data to send
+  const getCurrentData = () => {
+    try {
+      // Try to parse the current JSON text first (in case user edited it directly)
+      return JSON.parse(jsonText)
+    } catch {
+      // If JSON is invalid, return the originalData state
+      return originalData
+    }
+  }
+
   return (
     <div className="fixed inset-0 ml-56 bg-slate-50 flex flex-col">
       {/* Header */}
@@ -180,7 +197,7 @@ export function ExamJsonEditor({
             </button>
             {onNext && (
               <button
-                onClick={onNext}
+                onClick={() => onNext(getCurrentData())}
                 className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors"
               >
                 Next: Paper Details →
