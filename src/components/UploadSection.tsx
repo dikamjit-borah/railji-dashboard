@@ -72,7 +72,7 @@ export function UploadSection() {
 
   // Fetch paper codes when department or paperType changes
   useEffect(() => {
-    if (currentPaper.department && currentPaper.paperType !== 'general') {
+    if (currentPaper.department && currentPaper.paperType === 'sectional') {
       fetchPaperCodes(currentPaper.department, currentPaper.paperType)
     }
   }, [currentPaper.department, currentPaper.paperType])
@@ -87,8 +87,18 @@ export function UploadSection() {
         paperCode: '',
       }))
       fetchGeneralPaperCodes('general')
-    } else if (currentPaper.paperType === 'full' || currentPaper.paperType === 'sectional') {
-      // For sectional/full papers, ensure departments are loaded
+    } else if (currentPaper.paperType === 'full') {
+      // For full papers, ensure departments are loaded but clear paper code (not applicable)
+      if (departments.length === 0) {
+        fetchDepartments()
+      }
+      setPaperCodes([])
+      setCurrentPaper((prev) => ({
+        ...prev,
+        paperCode: '',
+      }))
+    } else if (currentPaper.paperType === 'sectional') {
+      // For sectional papers, ensure departments are loaded
       if (departments.length === 0) {
         fetchDepartments()
       }
@@ -239,12 +249,17 @@ export function UploadSection() {
       currentPaper.duration !== '' &&
       currentPaper.jsonFile
 
-    // For general papers, department and paperCode are not required
+    // For general papers, department is not required but paperCode is required
     if (currentPaper.paperType === 'general') {
-      return baseFilled
+      return baseFilled && currentPaper.paperCode
     }
 
-    // For sectional and full papers, department and paperCode are required
+    // For full papers, department is required but paperCode is not applicable
+    if (currentPaper.paperType === 'full') {
+      return baseFilled && currentPaper.department
+    }
+
+    // For sectional papers, both department and paperCode are required
     return baseFilled && currentPaper.department && currentPaper.paperCode
   }
 
@@ -264,7 +279,7 @@ export function UploadSection() {
 
       const payload = {
         departmentId: currentPaper.department || undefined,
-        paperCode: currentPaper.paperCode || undefined,
+        paperCode: currentPaper.paperType === 'full' ? undefined : (currentPaper.paperCode || undefined),
         paperType: currentPaper.paperType,
         name: currentPaper.paperName,
         description: currentPaper.paperDescription,
@@ -442,7 +457,7 @@ export function UploadSection() {
               {/* Paper Code */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Section Code <span className="text-red-500">*</span>
+                  Section Code {currentPaper.paperType !== 'full' && <span className="text-red-500">*</span>}
                 </label>
                 <select
                   value={currentPaper.paperCode}
@@ -458,7 +473,8 @@ export function UploadSection() {
                   }}
                   disabled={
                     !currentPaper.paperType ||
-                    (currentPaper.paperType !== 'general' && !currentPaper.department) ||
+                    currentPaper.paperType === 'full' ||
+                    (currentPaper.paperType === 'sectional' && !currentPaper.department) ||
                     loadingCodes
                   }
                   className="input-minimal w-full disabled:opacity-50"
@@ -466,11 +482,13 @@ export function UploadSection() {
                   <option value="">
                     {!currentPaper.paperType
                       ? 'Select paper type first'
-                      : currentPaper.paperType !== 'general' && !currentPaper.department
-                        ? 'Select department first'
-                        : loadingCodes
-                          ? 'Loading codes...'
-                          : 'Select section code'}
+                      : currentPaper.paperType === 'full'
+                        ? 'Not applicable for Full papers'
+                        : currentPaper.paperType === 'sectional' && !currentPaper.department
+                          ? 'Select department first'
+                          : loadingCodes
+                            ? 'Loading codes...'
+                            : 'Select section code'}
                   </option>
                   {paperCodes.map((code) => (
                     <option key={code} value={code}>

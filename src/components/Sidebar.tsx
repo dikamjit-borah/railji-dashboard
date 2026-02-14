@@ -76,12 +76,12 @@ export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
             label="Upload Paper"
             isActive={isActive('/upload')}
           />
-          <NavItem
+{/*           <NavItem
             href="/papers"
             icon={BookOpen}
             label="Papers"
             isActive={isActive('/papers')}
-          />
+          /> */}
           <NavItem
             href="/users"
             icon={Users}
