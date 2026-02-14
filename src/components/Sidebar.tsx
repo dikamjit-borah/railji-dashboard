@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { FileText, BookOpen, Users, Home, BarChart3, X } from 'lucide-react'
+import { FileText, Users, Home, BarChart3, X } from 'lucide-react'
 
 interface SidebarProps {
   isOpen?: boolean
