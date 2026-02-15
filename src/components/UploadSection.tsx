@@ -212,6 +212,14 @@ export function UploadSection() {
 
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       const file = e.dataTransfer.files[0]
+      
+      // Check file size (10 MB limit)
+      const maxSize = 10 * 1024 * 1024 // 10 MB in bytes
+      if (file.size > maxSize) {
+        alert('File is too large. Maximum file size is 10 MB.')
+        return
+      }
+      
       // Handle JSON file drop
       if (file.type === 'application/json' || file.name.endsWith('.json')) {
         const reader = new FileReader()
@@ -229,6 +237,9 @@ export function UploadSection() {
             alert('Invalid JSON file. Please upload a valid JSON file.')
             console.error('JSON parse error:', error)
           }
+        }
+        reader.onerror = () => {
+          alert('Failed to read file. Please try again.')
         }
         reader.readAsText(file)
       }
@@ -347,6 +358,15 @@ export function UploadSection() {
     const files = e.target.files
     if (files && files[0]) {
       const file = files[0]
+      
+      // Check file size (10 MB limit)
+      const maxSize = 10 * 1024 * 1024 // 10 MB in bytes
+      if (file.size > maxSize) {
+        alert('File is too large. Maximum file size is 10 MB.')
+        e.target.value = '' // Reset input
+        return
+      }
+      
       const reader = new FileReader()
       
       reader.onload = (event) => {
@@ -359,10 +379,17 @@ export function UploadSection() {
             content: content,
           }
           setCurrentPaper({ ...currentPaper, jsonFile: fileData })
+          e.target.value = '' // Reset input after successful upload
         } catch (error) {
           alert('Invalid JSON file. Please upload a valid JSON file.')
           console.error('JSON parse error:', error)
+          e.target.value = '' // Reset input on error
         }
+      }
+      
+      reader.onerror = () => {
+        alert('Failed to read file. Please try again.')
+        e.target.value = '' // Reset input on error
       }
       
       reader.readAsText(file)
