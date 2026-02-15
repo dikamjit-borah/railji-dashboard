@@ -1,8 +1,5 @@
-/* const BUSINESS_API_BASE_URL = 'https://railji-business.onrender.com/business/v1'
+const BUSINESS_API_BASE_URL = 'https://railji-business.onrender.com/business/v1'
 const DASHBOARD_API_BASE_URL = 'https://railji-dashboard.onrender.com/dashboard/v1'
- */
-const BUSINESS_API_BASE_URL = 'http://localhost:3001/business/v1'
-const DASHBOARD_API_BASE_URL = 'http://localhost:3002/dashboard/v1'
 
 export const API_ENDPOINTS = {
   // Departments
