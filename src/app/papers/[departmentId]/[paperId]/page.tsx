@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation'
 import { Loader2, AlertCircle } from 'lucide-react'
 import { PageHeader } from '@/components/PageHeader'
 import { PaperJsonEditor } from '@/components/PaperJsonEditor'
+import { PaperDetailsForm } from '@/components/PaperDetailsForm'
 import { API_ENDPOINTS } from '@/lib/api'
 
 interface PaperData {
@@ -138,11 +139,6 @@ export default function PaperDetailsPage() {
   }
 
   const updatePaper = async () => {
-    if (!currentPaper.jsonFile) {
-      alert('No questions data available')
-      return
-    }
-
     setUpdatingPaper(true)
     try {
       const questions = currentPaper.jsonFile.content?.questions || []
@@ -150,7 +146,7 @@ export default function PaperDetailsPage() {
 
       const payload = {
         departmentId: currentPaper.department || undefined,
-        paperCode: currentPaper.paperCode || undefined,
+        paperCode: currentPaper.paperType === 'full' ? undefined : (currentPaper.paperCode || undefined),
         paperType: currentPaper.paperType,
         name: currentPaper.paperName,
         description: currentPaper.paperDescription,
@@ -253,249 +249,14 @@ export default function PaperDetailsPage() {
             subtitle="Update paper information"
           />
           <div className="px-8 py-12">
-            <div className="max-w-2xl space-y-6">
-              {/* Paper Type */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Paper Type <span className="text-red-500">*</span>
-                </label>
-                <select
-                  value={currentPaper.paperType}
-                  onChange={(e) =>
-                    setCurrentPaper({
-                      ...currentPaper,
-                      paperType: e.target.value as 'sectional' | 'full' | 'general' | '',
-                    })
-                  }
-                  className="input-minimal w-full"
-                >
-                  <option value="">Select paper type</option>
-                  <option value="sectional">Sectional</option>
-                  <option value="full">Full</option>
-                  <option value="general">General</option>
-                </select>
-              </div>
-
-              {/* Department */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Department ID
-                </label>
-                <input
-                  type="text"
-                  value={currentPaper.department}
-                  onChange={(e) =>
-                    setCurrentPaper({
-                      ...currentPaper,
-                      department: e.target.value,
-                    })
-                  }
-                  className="input-minimal w-full"
-                  placeholder="e.g., DEPT002"
-                />
-              </div>
-
-              {/* Paper Code */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Section Code
-                </label>
-                <input
-                  type="text"
-                  value={currentPaper.paperCode}
-                  onChange={(e) =>
-                    setCurrentPaper({
-                      ...currentPaper,
-                      paperCode: e.target.value,
-                    })
-                  }
-                  className="input-minimal w-full"
-                  placeholder="e.g., Test"
-                />
-              </div>
-
-              {/* Year */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Year <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="number"
-                  placeholder="e.g., 2024"
-                  min="2000"
-                  max="2100"
-                  value={currentPaper.year}
-                  onChange={(e) =>
-                    setCurrentPaper({
-                      ...currentPaper,
-                      year: e.target.value,
-                    })
-                  }
-                  className="input-minimal w-full"
-                />
-              </div>
-
-              {/* Shift */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Shift <span className="text-red-500">*</span>
-                </label>
-                <select
-                  value={currentPaper.shift}
-                  onChange={(e) =>
-                    setCurrentPaper({
-                      ...currentPaper,
-                      shift: e.target.value as 'morning' | 'afternoon' | 'evening' | 'night' | '',
-                    })
-                  }
-                  className="input-minimal w-full"
-                >
-                  <option value="">Select shift</option>
-                  <option value="morning">Morning</option>
-                  <option value="afternoon">Afternoon</option>
-                  <option value="evening">Evening</option>
-                  <option value="night">Night</option>
-                </select>
-              </div>
-
-              {/* Paper Name */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Paper Name <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  placeholder="Enter paper name"
-                  value={currentPaper.paperName}
-                  onChange={(e) =>
-                    setCurrentPaper({
-                      ...currentPaper,
-                      paperName: e.target.value,
-                    })
-                  }
-                  className="input-minimal w-full"
-                />
-              </div>
-
-              {/* Paper Description */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Paper Description
-                </label>
-                <textarea
-                  placeholder="Enter paper description"
-                  value={currentPaper.paperDescription}
-                  onChange={(e) =>
-                    setCurrentPaper({
-                      ...currentPaper,
-                      paperDescription: e.target.value,
-                    })
-                  }
-                  className="input-minimal w-full resize-none"
-                  rows={3}
-                />
-              </div>
-
-              {/* Pass Marks and Negative Marks */}
-              <div className="grid grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Pass Marks <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="number"
-                    placeholder="e.g., 40"
-                    min="0"
-                    value={currentPaper.passMarks}
-                    onChange={(e) =>
-                      setCurrentPaper({
-                        ...currentPaper,
-                        passMarks: e.target.value ? Number(e.target.value) : '',
-                      })
-                    }
-                    className="input-minimal w-full"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Negative Marks <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="number"
-                    placeholder="e.g., 0.25"
-                    step="0.01"
-                    min="0"
-                    value={currentPaper.negativeMarks}
-                    onChange={(e) =>
-                      setCurrentPaper({
-                        ...currentPaper,
-                        negativeMarks: e.target.value ? Number(e.target.value) : '',
-                      })
-                    }
-                    className="input-minimal w-full"
-                  />
-                </div>
-              </div>
-
-              {/* Duration */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Duration (minutes) <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="number"
-                  placeholder="e.g., 90"
-                  min="1"
-                  value={currentPaper.duration}
-                  onChange={(e) =>
-                    setCurrentPaper({
-                      ...currentPaper,
-                      duration: e.target.value ? Number(e.target.value) : '',
-                    })
-                  }
-                  className="input-minimal w-full"
-                />
-              </div>
-
-              {/* Checkboxes */}
-              <div className="flex gap-6">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={currentPaper.isFree}
-                    onChange={(e) =>
-                      setCurrentPaper({
-                        ...currentPaper,
-                        isFree: e.target.checked,
-                      })
-                    }
-                    className="w-4 h-4"
-                  />
-                  <span className="text-sm font-medium text-slate-700">Free</span>
-                </label>
-              </div>
-
-              {/* Buttons */}
-              <div className="flex gap-3 pt-8">
-                <button
-                  onClick={() => setStage('editor')}
-                  className="flex-1 py-2 px-4 rounded font-medium btn-minimal-secondary"
-                >
-                  Back to Editor
-                </button>
-                <button
-                  onClick={updatePaper}
-                  disabled={updatingPaper}
-                  className={`flex-1 py-2 px-4 rounded font-medium transition-all ${
-                    !updatingPaper
-                      ? 'btn-minimal-primary'
-                      : 'btn-minimal-primary opacity-50 cursor-not-allowed'
-                  }`}
-                >
-                  {updatingPaper ? 'Updating...' : 'Update Paper'}
-                </button>
-              </div>
-            </div>
+            <PaperDetailsForm
+              currentPaper={currentPaper}
+              setCurrentPaper={setCurrentPaper}
+              onBack={() => setStage('editor')}
+              onSubmit={updatePaper}
+              isSubmitting={updatingPaper}
+              submitButtonText="Update Paper"
+            />
           </div>
         </div>
       )}
