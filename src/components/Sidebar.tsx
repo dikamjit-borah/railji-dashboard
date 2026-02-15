@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { FileText, Users, Home, BarChart3, X } from 'lucide-react'
+import { FileText, BookOpen, Users, Home, BarChart3, X } from 'lucide-react'
 
 interface SidebarProps {
   isOpen?: boolean
@@ -76,12 +76,12 @@ export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
             label="Upload Paper"
             isActive={isActive('/upload')}
           />
-{/*           <NavItem
+          <NavItem
             href="/papers"
             icon={BookOpen}
             label="Papers"
             isActive={isActive('/papers')}
-          /> */}
+          />
           <NavItem
             href="/users"
             icon={Users}

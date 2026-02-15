@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { Upload, Check } from 'lucide-react'
 import { PageHeader } from './PageHeader'
 import { PaperJsonEditor } from './PaperJsonEditor'
+import { API_ENDPOINTS } from '@/lib/api'
 
 interface PaperData {
   paperType: 'sectional' | 'full' | 'general' | ''
@@ -114,7 +115,7 @@ export function UploadSection() {
   const fetchDepartments = async () => {
     setLoadingDepartments(true)
     try {
-      const response = await fetch('https://railji-business.onrender.com/business/v1/departments')
+      const response = await fetch(API_ENDPOINTS.departments)
       const data = await response.json()
       
       if (data.success && data.data) {
@@ -149,9 +150,7 @@ export function UploadSection() {
   const fetchPaperCodes = async (departmentId: string, paperType: string) => {
     setLoadingCodes(true)
     try {
-      const response = await fetch(
-        `https://railji-business.onrender.com/business/v1/papers/${departmentId}?paperType=${paperType}`
-      )
+      const response = await fetch(API_ENDPOINTS.papersByType(departmentId, paperType))
       const data = await response.json()
 
       if (data.success && data.data?.metadata?.paperCodes) {
@@ -177,9 +176,7 @@ export function UploadSection() {
     setLoadingCodes(true)
     try {
       // Use a default department ID for general papers
-      const response = await fetch(
-        `https://railji-business.onrender.com/business/v1/papers/general?paperType=${paperType}`
-      )
+      const response = await fetch(API_ENDPOINTS.generalPapersByType(paperType))
       const data = await response.json()
 
       if (data.success && data.data?.metadata?.paperCodes) {
@@ -293,7 +290,7 @@ export function UploadSection() {
         questions,
       }
 
-      const response = await fetch('https://railji-dashboard.onrender.com/dashboard/v1/create/paper', {
+      const response = await fetch(API_ENDPOINTS.createPaper, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

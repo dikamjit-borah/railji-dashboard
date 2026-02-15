@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation'
 import { Loader2, AlertCircle } from 'lucide-react'
 import { PageHeader } from '@/components/PageHeader'
 import { PaperJsonEditor } from '@/components/PaperJsonEditor'
+import { API_ENDPOINTS } from '@/lib/api'
 
 interface PaperData {
   paperType: 'sectional' | 'full' | 'general' | ''
@@ -97,9 +98,7 @@ export default function PaperDetailsPage() {
     setLoading(true)
     setError(null)
     try {
-      const response = await fetch(
-        `https://railji-business.onrender.com/business/v1/papers/${departmentId}/${paperId}`
-      )
+      const response = await fetch(API_ENDPOINTS.paperDetail(departmentId, paperId))
       
       if (!response.ok) throw new Error('Failed to fetch paper details')
       const result: ApiResponse = await response.json()
@@ -166,9 +165,9 @@ export default function PaperDetailsPage() {
       }
 
       const response = await fetch(
-        `https://railji-business.onrender.com/business/v1/papers/${departmentId}/${paperId}`,
+        API_ENDPOINTS.updatePaper(paperId),
         {
-          method: 'PUT',
+          method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
           },

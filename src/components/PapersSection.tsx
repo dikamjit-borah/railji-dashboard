@@ -1,9 +1,10 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { Trash2, ChevronDown, ChevronRight, Loader2, AlertCircle } from 'lucide-react'
+import { Trash2, ChevronDown, ChevronRight, Loader2, AlertCircle, ToggleLeft, ToggleRight } from 'lucide-react'
 import { PageHeader } from './PageHeader'
 import { useRouter } from 'next/navigation'
+import { API_ENDPOINTS } from '@/lib/api'
 
 interface Department {
   departmentId: string
@@ -29,6 +30,7 @@ interface Paper {
   rating?: number
   isFree?: boolean
   isNew?: boolean
+  isActive?: boolean
   paperType?: string
   usersAttempted?: number
   createdAt?: string
@@ -44,6 +46,7 @@ export function PapersSection() {
   const [loadingPapers, setLoadingPapers] = useState<Set<string>>(new Set())
   const [error, setError] = useState<string | null>(null)
   const [deletingPaper, setDeletingPaper] = useState<string | null>(null)
+  const [togglingPaper, setTogglingPaper] = useState<string | null>(null)
   const hasFetched = useRef(false)
 
   useEffect(() => {
@@ -57,7 +60,7 @@ export function PapersSection() {
     setLoadingDepts(true)
     setError(null)
     try {
-      const response = await fetch('https://railji-business.onrender.com/business/v1/departments')
+      const response = await fetch(API_ENDPOINTS.departments)
       if (!response.ok) throw new Error('Failed to fetch departments')
       const data = await response.json()
       
@@ -87,7 +90,7 @@ export function PapersSection() {
     
     setLoadingPapers(prev => new Set(prev).add(deptId))
     try {
-      const response = await fetch(`https://railji-business.onrender.com/business/v1/papers/${deptId}`)
+      const response = await fetch(API_ENDPOINTS.papers(deptId))
       if (!response.ok) throw new Error('Failed to fetch papers')
       const result = await response.json()
       
@@ -132,20 +135,46 @@ export function PapersSection() {
     
     setDeletingPaper(paperId)
     try {
-      const response = await fetch(`https://railji-business.onrender.com/business/v1/papers/${paperId}`, {
+      const response = await fetch(API_ENDPOINTS.deletePaper(paperId), {
         method: 'DELETE',
       })
       if (!response.ok) throw new Error('Failed to delete paper')
       
-      // Remove from local state
+      // Remove from local state using paperId
       setPapersByDept(prev => ({
         ...prev,
-        [deptId]: prev[deptId].filter(p => p._id !== paperId)
+        [deptId]: prev[deptId].filter(p => p.paperId !== paperId)
       }))
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to delete paper')
     } finally {
       setDeletingPaper(null)
+    }
+  }
+
+  const handleTogglePaper = async (paperId: string, deptId: string, currentStatus: boolean) => {
+    setTogglingPaper(paperId)
+    try {
+      const response = await fetch(API_ENDPOINTS.togglePaper(paperId), {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ isActive: !currentStatus }),
+      })
+      if (!response.ok) throw new Error('Failed to toggle paper status')
+      
+      // Update local state using paperId
+      setPapersByDept(prev => ({
+        ...prev,
+        [deptId]: prev[deptId].map(p => 
+          p.paperId === paperId ? { ...p, isActive: !currentStatus } : p
+        )
+      }))
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to toggle paper status')
+    } finally {
+      setTogglingPaper(null)
     }
   }
 
@@ -263,12 +292,30 @@ export function PapersSection() {
                                 View Details
                               </button>
                               <button
-                                onClick={() => handleDeletePaper(paper._id, dept.departmentId)}
-                                disabled={deletingPaper === paper._id}
+                                onClick={() => handleTogglePaper(paper.paperId, dept.departmentId, paper.isActive ?? true)}
+                                disabled={togglingPaper === paper.paperId}
+                                className={`transition-colors p-1.5 disabled:opacity-50 ${
+                                  paper.isActive !== false 
+                                    ? 'text-green-600 hover:text-green-700' 
+                                    : 'text-slate-400 hover:text-slate-600'
+                                }`}
+                                title={paper.isActive !== false ? 'Deactivate paper' : 'Activate paper'}
+                              >
+                                {togglingPaper === paper.paperId ? (
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : paper.isActive !== false ? (
+                                  <ToggleRight className="w-5 h-5" />
+                                ) : (
+                                  <ToggleLeft className="w-5 h-5" />
+                                )}
+                              </button>
+                              <button
+                                onClick={() => handleDeletePaper(paper.paperId, dept.departmentId)}
+                                disabled={deletingPaper === paper.paperId}
                                 className="text-slate-400 hover:text-red-600 transition-colors p-1.5 disabled:opacity-50"
                                 title="Delete paper"
                               >
-                                {deletingPaper === paper._id ? (
+                                {deletingPaper === paper.paperId ? (
                                   <Loader2 className="w-4 h-4 animate-spin" />
                                 ) : (
                                   <Trash2 className="w-4 h-4" />
