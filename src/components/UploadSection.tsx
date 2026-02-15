@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Upload, Check } from 'lucide-react'
 import { PageHeader } from './PageHeader'
 import { PaperJsonEditor } from './PaperJsonEditor'
@@ -25,21 +25,6 @@ interface PaperData {
     uploadTime: string
     content: any
   } | null
-}
-
-interface Department {
-  _id: string
-  departmentId: string
-  slug: string
-  name: string
-  fullName: string
-  description: string
-  icon: string
-  img: string
-  paperCount: number
-  materialCount: number
-  createdAt: string
-  updatedAt: string
 }
 
 export function UploadSection() {

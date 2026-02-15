@@ -141,7 +141,7 @@ export default function PaperDetailsPage() {
   const updatePaper = async () => {
     setUpdatingPaper(true)
     try {
-      const questions = currentPaper.jsonFile.content?.questions || []
+      const questions = currentPaper.jsonFile?.content?.questions || []
       const totalQuestions = questions.length
 
       const payload = {
