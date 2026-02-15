@@ -162,7 +162,18 @@ export function PaperJsonEditor({
   }, [])
 
   const deleteQuestion = useCallback((index: number) => {
-    setQuestions(prev => prev.filter((_, i) => i !== index))
+    setQuestions(prev => {
+      const filtered = prev.filter((_, i) => i !== index)
+      // Re-number the IDs sequentially
+      return filtered.map((q, i) => ({ ...q, id: i + 1 }))
+    })
+    // Close the expanded section when deleting a question
+    setExpandedIndex(prev => {
+      if (prev === null) return null
+      if (prev === index) return null // If deleting the expanded question, close it
+      if (prev > index) return prev - 1 // If deleting before expanded, adjust index
+      return prev // Otherwise keep the same
+    })
   }, [])
 
   const updateOption = useCallback((qIndex: number, oIndex: number, lang: 'en' | 'hi', value: string) => {
