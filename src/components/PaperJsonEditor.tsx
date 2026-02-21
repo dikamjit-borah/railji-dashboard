@@ -22,11 +22,13 @@ interface NormalizedQuestion {
 export function PaperJsonEditor({ 
   onBack,
   onNext,
-  initialQuestions 
+  initialQuestions,
+  fileName
 }: { 
   readonly onBack: () => void
   readonly onNext?: (updatedData: any) => void
   readonly initialQuestions?: Question[] | { questions: Question[] }
+  readonly fileName?: string
 }) {
   // Normalize the questions data for editing
   const normalizeQuestions = (data: any): NormalizedQuestion[] => {
@@ -207,7 +209,13 @@ export function PaperJsonEditor({
             <div>
               <h1 className="text-2xl font-bold text-slate-950">Paper Editor</h1>
               <p className="text-sm text-slate-600 mt-1">
-                Edit paper questions and answers in JSON format
+                {fileName ? (
+                  <>
+                    File: <span className="font-semibold text-slate-950 bg-yellow-100 px-2 py-0.5 rounded">{fileName}</span>
+                  </>
+                ) : (
+                  'Edit paper questions and answers in JSON format'
+                )}
               </p>
             </div>
           </div>

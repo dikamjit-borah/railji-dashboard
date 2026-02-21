@@ -5,7 +5,7 @@ import { useMenu } from './LayoutWrapper'
 
 interface PageHeaderProps {
   title: string
-  subtitle?: string
+  subtitle?: string | React.ReactNode
   action?: {
     label: string
     onClick: () => void

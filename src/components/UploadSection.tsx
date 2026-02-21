@@ -222,12 +222,21 @@ export function UploadSection() {
             setStage('details')
           }}
           initialQuestions={currentPaper.jsonFile?.content}
+          fileName={currentPaper.jsonFile?.name}
         />
       ) : stage === 'details' ? (
         <div className="ml-56 bg-slate-50 min-h-screen">
           <PageHeader
             title="Paper Details"
-            subtitle="Fill in the paper information"
+            subtitle={
+              currentPaper.jsonFile ? (
+                <>
+                  File: <span className="font-semibold text-slate-950 bg-yellow-100 px-2 py-0.5 rounded">{currentPaper.jsonFile.name}</span>
+                </>
+              ) : (
+                'Fill in the paper information'
+              )
+            }
           />
           <div className="px-8 py-12">
             <PaperDetailsForm
