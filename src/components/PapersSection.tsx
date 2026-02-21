@@ -25,7 +25,7 @@ interface Paper {
   examType?: string
   totalQuestions?: number
   duration?: number
-  passMarks?: number
+  passPercentage?: number
   negativeMarking?: number
   rating?: number
   isFree?: boolean

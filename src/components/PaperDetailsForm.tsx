@@ -11,7 +11,7 @@ interface PaperData {
   shift: 'morning' | 'afternoon' | 'evening' | 'night' | ''
   paperName: string
   paperDescription: string
-  passMarks: number | ''
+  passPercentage: number | ''
   negativeMarks: number | ''
   duration: number | ''
   isFree: boolean
@@ -168,8 +168,12 @@ export function PaperDetailsForm({
       currentPaper.year &&
       currentPaper.shift &&
       currentPaper.paperName.trim() &&
-      currentPaper.passMarks !== '' &&
+      currentPaper.passPercentage !== '' &&
+      currentPaper.passPercentage >= 0 &&
+      currentPaper.passPercentage <= 100 &&
       currentPaper.negativeMarks !== '' &&
+      currentPaper.negativeMarks >= 0 &&
+      currentPaper.negativeMarks <= 10 &&
       currentPaper.duration !== '' &&
       currentPaper.jsonFile
 
@@ -373,25 +377,33 @@ export function PaperDetailsForm({
           />
         </div>
 
-        {/* Pass Marks and Negative Marks */}
+        {/* Pass Percentage and Negative Marks */}
         <div className="grid grid-cols-2 gap-6">
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-2">
-              Pass Marks <span className="text-red-500">*</span>
+              Pass Percentage (%) <span className="text-red-500">*</span>
             </label>
             <input
               type="number"
               placeholder="e.g., 40"
               min="0"
-              value={currentPaper.passMarks}
-              onChange={(e) =>
-                setCurrentPaper({
-                  ...currentPaper,
-                  passMarks: e.target.value ? Number(e.target.value) : '',
-                })
-              }
+              max="100"
+              value={currentPaper.passPercentage}
+              onChange={(e) => {
+                const value = e.target.value ? Number(e.target.value) : ''
+                if (value === '' || (value >= 0 && value <= 100)) {
+                  setCurrentPaper({
+                    ...currentPaper,
+                    passPercentage: value,
+                  })
+                }
+              }}
               className="input-minimal w-full"
             />
+            {currentPaper.passPercentage !== '' && 
+             (currentPaper.passPercentage < 0 || currentPaper.passPercentage > 100) && (
+              <p className="text-xs text-red-600 mt-1">Must be between 0 and 100</p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-2">
@@ -402,15 +414,23 @@ export function PaperDetailsForm({
               placeholder="e.g., 0.25"
               step="0.01"
               min="0"
+              max="10"
               value={currentPaper.negativeMarks}
-              onChange={(e) =>
-                setCurrentPaper({
-                  ...currentPaper,
-                  negativeMarks: e.target.value ? Number(e.target.value) : '',
-                })
-              }
+              onChange={(e) => {
+                const value = e.target.value ? Number(e.target.value) : ''
+                if (value === '' || (value >= 0 && value <= 10)) {
+                  setCurrentPaper({
+                    ...currentPaper,
+                    negativeMarks: value,
+                  })
+                }
+              }}
               className="input-minimal w-full"
             />
+            {currentPaper.negativeMarks !== '' && 
+             (currentPaper.negativeMarks < 0 || currentPaper.negativeMarks > 10) && (
+              <p className="text-xs text-red-600 mt-1">Must be between 0 and 10</p>
+            )}
           </div>
         </div>
 

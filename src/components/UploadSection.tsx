@@ -15,7 +15,7 @@ interface PaperData {
   shift: 'morning' | 'afternoon' | 'evening' | 'night' | ''
   paperName: string
   paperDescription: string
-  passMarks: number | ''
+  passPercentage: number | ''
   negativeMarks: number | ''
   duration: number | ''
   isFree: boolean
@@ -37,7 +37,7 @@ export function UploadSection() {
     shift: '',
     paperName: '',
     paperDescription: '',
-    passMarks: '',
+    passPercentage: '',
     negativeMarks: '',
     duration: '',
     isFree: false,
@@ -115,7 +115,7 @@ export function UploadSection() {
         year: Number(currentPaper.year),
         shift: currentPaper.shift.charAt(0).toUpperCase() + currentPaper.shift.slice(1),
         totalQuestions,
-        passMarks: Number(currentPaper.passMarks),
+        passPercentage: Number(currentPaper.passPercentage),
         negativeMarking: Number(currentPaper.negativeMarks),
         duration: Number(currentPaper.duration),
         isFree: currentPaper.isFree,
@@ -148,7 +148,7 @@ export function UploadSection() {
         shift: '',
         paperName: '',
         paperDescription: '',
-        passMarks: '',
+        passPercentage: '',
         negativeMarks: '',
         duration: '',
         isFree: false,

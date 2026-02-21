@@ -16,7 +16,7 @@ interface PaperData {
   shift: 'morning' | 'afternoon' | 'evening' | 'night' | ''
   paperName: string
   paperDescription: string
-  passMarks: number | ''
+  passPercentage: number | ''
   negativeMarks: number | ''
   duration: number | ''
   isFree: boolean
@@ -39,7 +39,7 @@ interface PaperDetails {
   shift?: string
   totalQuestions?: number
   duration?: number
-  passMarks?: number
+  passPercentage?: number
   negativeMarking?: number
   rating?: number
   isFree?: boolean
@@ -79,7 +79,7 @@ export default function PaperDetailsPage() {
     shift: '',
     paperName: '',
     paperDescription: '',
-    passMarks: '',
+    passPercentage: '',
     negativeMarks: '',
     duration: '',
     isFree: false,
@@ -117,7 +117,7 @@ export default function PaperDetailsPage() {
           shift: (paper.shift?.toLowerCase() as any) || '',
           paperName: paper.name || '',
           paperDescription: paper.description || '',
-          passMarks: paper.passMarks ?? '',
+          passPercentage: paper.passPercentage ?? '',
           negativeMarks: paper.negativeMarking ?? '',
           duration: paper.duration ?? '',
           isFree: paper.isFree || false,
@@ -153,7 +153,7 @@ export default function PaperDetailsPage() {
         year: Number(currentPaper.year),
         shift: currentPaper.shift.charAt(0).toUpperCase() + currentPaper.shift.slice(1),
         totalQuestions,
-        passMarks: Number(currentPaper.passMarks),
+        passPercentage: Number(currentPaper.passPercentage),
         negativeMarking: Number(currentPaper.negativeMarks),
         duration: Number(currentPaper.duration),
         isFree: currentPaper.isFree,
