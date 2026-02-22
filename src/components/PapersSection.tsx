@@ -1,13 +1,19 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { Trash2, ChevronDown, ChevronRight, Loader2, AlertCircle, ToggleLeft, ToggleRight } from 'lucide-react'
+import { Trash2, ChevronDown, ChevronRight, Loader2, AlertCircle, ToggleLeft, ToggleRight, ChevronLeft } from 'lucide-react'
 import { PageHeader } from './PageHeader'
 import { useRouter } from 'next/navigation'
 import { API_ENDPOINTS } from '@/lib/api'
 
 interface Department {
   departmentId: string
+  name: string
+  description?: string
+}
+
+interface GeneralDepartment {
+  departmentId: 'GENERAL'
   name: string
   description?: string
 }
@@ -37,10 +43,19 @@ interface Paper {
   updatedAt?: string
 }
 
+interface PaginationInfo {
+  page: number
+  limit: number
+  total: number
+  totalPages: number
+}
+
 export function PapersSection() {
   const router = useRouter()
-  const [departments, setDepartments] = useState<Department[]>([])
+  const [allDepartments, setAllDepartments] = useState<(Department | GeneralDepartment)[]>([])
   const [papersByDept, setPapersByDept] = useState<Record<string, Paper[]>>({})
+  const [paginationByDept, setPaginationByDept] = useState<Record<string, PaginationInfo>>({})
+  const [currentPageByDept, setCurrentPageByDept] = useState<Record<string, number>>({})
   const [expandedDepts, setExpandedDepts] = useState<Set<string>>(new Set())
   const [loadingDepts, setLoadingDepts] = useState(true)
   const [loadingPapers, setLoadingPapers] = useState<Set<string>>(new Set())
@@ -77,7 +92,24 @@ export function PapersSection() {
         depts = []
       }
       
-      setDepartments(depts)
+      // Add General Papers as a special department at the top
+      const generalDept: GeneralDepartment = {
+        departmentId: 'GENERAL',
+        name: 'General Papers',
+        description: 'Common papers across all departments'
+      }
+      
+      const allDepts = [generalDept, ...depts]
+      setAllDepartments(allDepts)
+      
+      // Fetch first page for each department to get total counts
+      allDepts.forEach(dept => {
+        if (dept.departmentId === 'GENERAL') {
+          fetchGeneralPapers(1)
+        } else {
+          fetchPapersForDept(dept.departmentId, 1)
+        }
+      })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load departments')
     } finally {
@@ -85,21 +117,23 @@ export function PapersSection() {
     }
   }
 
-  const fetchPapersForDept = async (deptId: string) => {
-    if (papersByDept[deptId]) return // Already loaded
-    
+  const fetchPapersForDept = async (deptId: string, page: number = 1) => {
     setLoadingPapers(prev => new Set(prev).add(deptId))
     try {
-      const response = await fetch(API_ENDPOINTS.papers(deptId))
+      const response = await fetch(API_ENDPOINTS.papers(deptId, page))
       if (!response.ok) throw new Error('Failed to fetch papers')
       const result = await response.json()
       
       // Extract papers from nested response structure
       let papers: Paper[] = []
+      let pagination: PaginationInfo | null = null
+      
       if (result.data && result.data.papers && Array.isArray(result.data.papers)) {
         papers = result.data.papers
+        pagination = result.data.pagination
       } else if (result.papers && Array.isArray(result.papers)) {
         papers = result.papers
+        pagination = result.pagination
       } else if (Array.isArray(result.data)) {
         papers = result.data
       } else if (Array.isArray(result)) {
@@ -107,8 +141,53 @@ export function PapersSection() {
       }
       
       setPapersByDept(prev => ({ ...prev, [deptId]: papers }))
+      if (pagination) {
+        setPaginationByDept(prev => ({ ...prev, [deptId]: pagination }))
+      }
+      setCurrentPageByDept(prev => ({ ...prev, [deptId]: page }))
     } catch (err) {
       console.error(`Failed to load papers for ${deptId}:`, err)
+      setPapersByDept(prev => ({ ...prev, [deptId]: [] }))
+    } finally {
+      setLoadingPapers(prev => {
+        const next = new Set(prev)
+        next.delete(deptId)
+        return next
+      })
+    }
+  }
+
+  const fetchGeneralPapers = async (page: number = 1) => {
+    const deptId = 'GENERAL'
+    setLoadingPapers(prev => new Set(prev).add(deptId))
+    try {
+      const response = await fetch(API_ENDPOINTS.generalPapers(page))
+      if (!response.ok) throw new Error('Failed to fetch general papers')
+      const result = await response.json()
+      
+      // Extract papers from nested response structure
+      let papers: Paper[] = []
+      let pagination: PaginationInfo | null = null
+      
+      if (result.data && result.data.papers && Array.isArray(result.data.papers)) {
+        papers = result.data.papers
+        pagination = result.data.pagination
+      } else if (result.papers && Array.isArray(result.papers)) {
+        papers = result.papers
+        pagination = result.pagination
+      } else if (Array.isArray(result.data)) {
+        papers = result.data
+      } else if (Array.isArray(result)) {
+        papers = result
+      }
+      
+      setPapersByDept(prev => ({ ...prev, [deptId]: papers }))
+      if (pagination) {
+        setPaginationByDept(prev => ({ ...prev, [deptId]: pagination }))
+      }
+      setCurrentPageByDept(prev => ({ ...prev, [deptId]: page }))
+    } catch (err) {
+      console.error(`Failed to load general papers:`, err)
       setPapersByDept(prev => ({ ...prev, [deptId]: [] }))
     } finally {
       setLoadingPapers(prev => {
@@ -125,9 +204,23 @@ export function PapersSection() {
       newExpanded.delete(deptId)
     } else {
       newExpanded.add(deptId)
-      fetchPapersForDept(deptId)
+      if (!papersByDept[deptId]) {
+        if (deptId === 'GENERAL') {
+          fetchGeneralPapers(1)
+        } else {
+          fetchPapersForDept(deptId, 1)
+        }
+      }
     }
     setExpandedDepts(newExpanded)
+  }
+
+  const handlePageChange = (deptId: string, newPage: number) => {
+    if (deptId === 'GENERAL') {
+      fetchGeneralPapers(newPage)
+    } else {
+      fetchPapersForDept(deptId, newPage)
+    }
   }
 
   const handleDeletePaper = async (paperId: string, deptId: string) => {
@@ -222,10 +315,12 @@ export function PapersSection() {
 
       <div className="px-4 md:px-8 py-8 md:py-12">
         <div className="space-y-3">
-          {departments.map((dept) => {
+          {allDepartments.map((dept) => {
             const isExpanded = expandedDepts.has(dept.departmentId)
             const papers = papersByDept[dept.departmentId] || []
             const isLoadingPapers = loadingPapers.has(dept.departmentId)
+            const pagination = paginationByDept[dept.departmentId]
+            const currentPage = currentPageByDept[dept.departmentId] || 1
 
             return (
               <div key={dept.departmentId} className="bg-white border border-slate-200 overflow-hidden">
@@ -248,7 +343,13 @@ export function PapersSection() {
                     </div>
                   </div>
                   <span className="text-xs text-slate-500 bg-slate-200 px-2 py-1 rounded">
-                    {papers.length} {papers.length === 1 ? 'paper' : 'papers'}
+                    {isLoadingPapers ? (
+                      <Loader2 className="w-3 h-3 animate-spin inline" />
+                    ) : pagination ? (
+                      `${pagination.total} ${pagination.total === 1 ? 'paper' : 'papers'}`
+                    ) : (
+                      `${papers.length} ${papers.length === 1 ? 'paper' : 'papers'}`
+                    )}
                   </span>
                 </button>
 
@@ -264,67 +365,111 @@ export function PapersSection() {
                         No papers found in this department
                       </div>
                     ) : (
-                      <div className="divide-y divide-slate-100">
-                        {papers.map((paper) => (
-                          <div
-                            key={paper._id}
-                            className="px-6 py-4 hover:bg-slate-50 transition-colors flex items-center justify-between group"
-                          >
-                            <div className="flex-1 min-w-0">
-                              <h4 className="font-medium text-slate-950 truncate">{paper.name}</h4>
-                              <div className="flex items-center gap-4 mt-2 text-xs text-slate-500">
-                                {paper.paperCode && (
-                                  <span>Code: {paper.paperCode}</span>
-                                )}
-                                {paper.paperType && (
-                                  <span className="capitalize">{paper.paperType}</span>
-                                )}
-                                {paper.updatedAt && (
-                                  <span>Updated {new Date(paper.updatedAt).toLocaleDateString()}</span>
-                                )}
+                      <>
+                        <div className="divide-y divide-slate-100">
+                          {papers.map((paper) => (
+                            <div
+                              key={paper._id}
+                              className="px-6 py-4 hover:bg-slate-50 transition-colors flex items-center justify-between group"
+                            >
+                              <div className="flex-1 min-w-0">
+                                <h4 className="font-medium text-slate-950 truncate">{paper.name}</h4>
+                                <div className="flex items-center gap-4 mt-2 text-xs text-slate-500">
+                                  {paper.paperCode && (
+                                    <span>Code: {paper.paperCode}</span>
+                                  )}
+                                  {paper.paperType && (
+                                    <span className="capitalize">{paper.paperType}</span>
+                                  )}
+                                  {paper.updatedAt && (
+                                    <span>Updated {new Date(paper.updatedAt).toLocaleDateString()}</span>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2 ml-4">
+                                <button
+                                  onClick={() => handleViewPaper(paper.paperId, paper.departmentId)}
+                                  className="text-sm text-slate-600 hover:text-slate-950 transition-colors px-3 py-1.5 border border-slate-300 hover:border-slate-400"
+                                >
+                                  View Details
+                                </button>
+                                <button
+                                  onClick={() => handleTogglePaper(paper.paperId, dept.departmentId, paper.isActive ?? true)}
+                                  disabled={togglingPaper === paper.paperId}
+                                  className={`transition-colors p-1.5 disabled:opacity-50 ${
+                                    paper.isActive !== false 
+                                      ? 'text-green-600 hover:text-green-700' 
+                                      : 'text-slate-400 hover:text-slate-600'
+                                  }`}
+                                  title={paper.isActive !== false ? 'Deactivate paper' : 'Activate paper'}
+                                >
+                                  {togglingPaper === paper.paperId ? (
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                  ) : paper.isActive !== false ? (
+                                    <ToggleRight className="w-5 h-5" />
+                                  ) : (
+                                    <ToggleLeft className="w-5 h-5" />
+                                  )}
+                                </button>
+                                <button
+                                  onClick={() => handleDeletePaper(paper.paperId, dept.departmentId)}
+                                  disabled={deletingPaper === paper.paperId}
+                                  className="text-slate-400 hover:text-red-600 transition-colors p-1.5 disabled:opacity-50"
+                                  title="Delete paper"
+                                >
+                                  {deletingPaper === paper.paperId ? (
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                  ) : (
+                                    <Trash2 className="w-4 h-4" />
+                                  )}
+                                </button>
                               </div>
                             </div>
-                            <div className="flex items-center gap-2 ml-4">
+                          ))}
+                        </div>
+
+                        {/* Pagination Controls */}
+                        {pagination && pagination.totalPages > 1 && (
+                          <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
+                            <div className="text-sm text-slate-600">
+                              Showing {((currentPage - 1) * pagination.limit) + 1} to {Math.min(currentPage * pagination.limit, pagination.total)} of {pagination.total} papers
+                            </div>
+                            <div className="flex items-center gap-2">
                               <button
-                                onClick={() => handleViewPaper(paper.paperId, paper.departmentId)}
-                                className="text-sm text-slate-600 hover:text-slate-950 transition-colors px-3 py-1.5 border border-slate-300 hover:border-slate-400"
+                                onClick={() => handlePageChange(dept.departmentId, currentPage - 1)}
+                                disabled={currentPage === 1}
+                                className="px-3 py-1.5 text-sm border border-slate-300 hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1"
                               >
-                                View Details
+                                <ChevronLeft className="w-4 h-4" />
+                                Previous
                               </button>
+                              <div className="flex items-center gap-1">
+                                {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map((page) => (
+                                  <button
+                                    key={page}
+                                    onClick={() => handlePageChange(dept.departmentId, page)}
+                                    className={`px-3 py-1.5 text-sm border transition-colors ${
+                                      page === currentPage
+                                        ? 'bg-slate-950 text-white border-slate-950'
+                                        : 'border-slate-300 hover:bg-white'
+                                    }`}
+                                  >
+                                    {page}
+                                  </button>
+                                ))}
+                              </div>
                               <button
-                                onClick={() => handleTogglePaper(paper.paperId, dept.departmentId, paper.isActive ?? true)}
-                                disabled={togglingPaper === paper.paperId}
-                                className={`transition-colors p-1.5 disabled:opacity-50 ${
-                                  paper.isActive !== false 
-                                    ? 'text-green-600 hover:text-green-700' 
-                                    : 'text-slate-400 hover:text-slate-600'
-                                }`}
-                                title={paper.isActive !== false ? 'Deactivate paper' : 'Activate paper'}
+                                onClick={() => handlePageChange(dept.departmentId, currentPage + 1)}
+                                disabled={currentPage === pagination.totalPages}
+                                className="px-3 py-1.5 text-sm border border-slate-300 hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1"
                               >
-                                {togglingPaper === paper.paperId ? (
-                                  <Loader2 className="w-4 h-4 animate-spin" />
-                                ) : paper.isActive !== false ? (
-                                  <ToggleRight className="w-5 h-5" />
-                                ) : (
-                                  <ToggleLeft className="w-5 h-5" />
-                                )}
-                              </button>
-                              <button
-                                onClick={() => handleDeletePaper(paper.paperId, dept.departmentId)}
-                                disabled={deletingPaper === paper.paperId}
-                                className="text-slate-400 hover:text-red-600 transition-colors p-1.5 disabled:opacity-50"
-                                title="Delete paper"
-                              >
-                                {deletingPaper === paper.paperId ? (
-                                  <Loader2 className="w-4 h-4 animate-spin" />
-                                ) : (
-                                  <Trash2 className="w-4 h-4" />
-                                )}
+                                Next
+                                <ChevronRight className="w-4 h-4" />
                               </button>
                             </div>
                           </div>
-                        ))}
-                      </div>
+                        )}
+                      </>
                     )}
                   </div>
                 )}
@@ -333,7 +478,7 @@ export function PapersSection() {
           })}
         </div>
 
-        {departments.length === 0 && (
+        {allDepartments.length === 0 && (
           <div className="text-center py-12">
             <p className="text-slate-600">No departments found</p>
           </div>
