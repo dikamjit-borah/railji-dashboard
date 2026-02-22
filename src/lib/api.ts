@@ -6,7 +6,10 @@ export const API_ENDPOINTS = {
   departments: `${BUSINESS_API_BASE_URL}/departments`,
   
   // Papers - Business API (Read operations)
-  papers: (departmentId: string) => `${BUSINESS_API_BASE_URL}/papers/${departmentId}`,
+  papers: (departmentId: string, page?: number) => 
+    `${BUSINESS_API_BASE_URL}/papers/${departmentId}${page ? `?page=${page}` : ''}`,
+  generalPapers: (page?: number) => 
+    `${BUSINESS_API_BASE_URL}/papers/GENERAL?paperType=general${page ? `&page=${page}` : ''}`,
   papersByType: (departmentId: string, paperType: string) => 
     `${BUSINESS_API_BASE_URL}/papers/${departmentId}?paperType=${paperType}`,
   generalPapersByType: (paperType: string) => 
