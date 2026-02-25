@@ -23,12 +23,14 @@ export function PaperJsonEditor({
   onBack,
   onNext,
   initialQuestions,
-  fileName
+  fileName,
+  allowJsonEdit = false
 }: { 
   readonly onBack: () => void
   readonly onNext?: (updatedData: any) => void
   readonly initialQuestions?: Question[] | { questions: Question[] }
   readonly fileName?: string
+  readonly allowJsonEdit?: boolean
 }) {
   // Normalize the questions data for editing
   const normalizeQuestions = (data: any): NormalizedQuestion[] => {
@@ -56,10 +58,14 @@ export function PaperJsonEditor({
   const [questions, setQuestions] = useState<NormalizedQuestion[]>(normalizeQuestions(initialQuestions))
   const [copied, setCopied] = useState(false)
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null)
+  const [jsonEditMode, setJsonEditMode] = useState(false)
+  const [jsonText, setJsonText] = useState('')
+  const [jsonError, setJsonError] = useState<string | null>(null)
   
   // Use refs to store pending updates without triggering re-renders
   const pendingUpdatesRef = useRef<Map<string, any>>(new Map())
   const updateTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const jsonUpdateTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   // Batch updates to reduce re-renders
   const scheduleUpdate = useCallback((key: string, value: any) => {
@@ -104,13 +110,16 @@ export function PaperJsonEditor({
         
         return newQuestions
       })
-    }, 100)
+    }, 300) // Increased debounce time
   }, [])
 
   useEffect(() => {
     return () => {
       if (updateTimerRef.current) {
         clearTimeout(updateTimerRef.current)
+      }
+      if (jsonUpdateTimerRef.current) {
+        clearTimeout(jsonUpdateTimerRef.current)
       }
     }
   }, [])
@@ -137,8 +146,39 @@ export function PaperJsonEditor({
         }))
   }, [questions, initialQuestions])
 
-  // Memoize JSON text
-  const jsonText = useMemo(() => JSON.stringify(originalData, null, 2), [originalData])
+  // Memoize JSON text with debounced updates
+  const generatedJsonText = useMemo(() => JSON.stringify(originalData, null, 2), [originalData])
+  
+  // Update jsonText when questions change (only if not in edit mode) - debounced
+  useEffect(() => {
+    if (!jsonEditMode) {
+      if (jsonUpdateTimerRef.current) {
+        clearTimeout(jsonUpdateTimerRef.current)
+      }
+      
+      jsonUpdateTimerRef.current = setTimeout(() => {
+        setJsonText(generatedJsonText)
+      }, 500) // Debounce JSON preview updates
+    }
+  }, [generatedJsonText, jsonEditMode])
+
+  const applyJsonChanges = useCallback(() => {
+    try {
+      const parsed = JSON.parse(jsonText)
+      const normalized = normalizeQuestions(parsed)
+      setQuestions(normalized)
+      setJsonEditMode(false)
+      setJsonError(null)
+    } catch (error) {
+      setJsonError(error instanceof Error ? error.message : 'Invalid JSON format')
+    }
+  }, [jsonText])
+
+  const cancelJsonEdit = useCallback(() => {
+    setJsonText(generatedJsonText)
+    setJsonEditMode(false)
+    setJsonError(null)
+  }, [generatedJsonText])
 
   const addQuestion = useCallback(() => {
     const newQuestion: NormalizedQuestion = {
@@ -428,30 +468,66 @@ export function PaperJsonEditor({
 
         {/* JSON Preview */}
         <div className="w-1/3 bg-white border-l border-slate-200 p-4 flex flex-col overflow-hidden">
-          <h3 className="text-sm font-semibold text-slate-950 mb-3">
-            JSON Preview (Read-only)
-          </h3>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold text-slate-950">
+              JSON Preview {!allowJsonEdit && '(Read-only)'}
+            </h3>
+            {allowJsonEdit && !jsonEditMode && (
+              <button
+                onClick={() => setJsonEditMode(true)}
+                className="text-xs px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded font-medium transition-colors"
+              >
+                Edit JSON
+              </button>
+            )}
+          </div>
+          {jsonError && (
+            <div className="mb-2 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700">
+              {jsonError}
+            </div>
+          )}
           <textarea
             value={jsonText}
-            readOnly
-            className="bg-slate-900 rounded-lg p-3 overflow-auto flex-1 text-xs font-mono text-slate-100 resize-none focus:outline-none"
+            onChange={(e) => setJsonText(e.target.value)}
+            readOnly={!jsonEditMode}
+            className={`bg-slate-900 rounded-lg p-3 overflow-auto flex-1 text-xs font-mono text-slate-100 resize-none focus:outline-none ${
+              jsonEditMode ? 'border-2 border-blue-500' : ''
+            }`}
           />
-          <button
-            onClick={copyToClipboard}
-            className="w-full mt-3 flex items-center justify-center gap-2 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-950 rounded-lg font-medium transition-colors text-xs"
-          >
-            {copied ? (
-              <>
+          {jsonEditMode ? (
+            <div className="flex gap-2 mt-3">
+              <button
+                onClick={applyJsonChanges}
+                className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors text-xs"
+              >
                 <Check className="w-4 h-4" />
-                Copied!
-              </>
-            ) : (
-              <>
-                <Copy className="w-4 h-4" />
-                Copy JSON
-              </>
-            )}
-          </button>
+                Apply Changes
+              </button>
+              <button
+                onClick={cancelJsonEdit}
+                className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-slate-200 hover:bg-slate-300 text-slate-950 rounded-lg font-medium transition-colors text-xs"
+              >
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={copyToClipboard}
+              className="w-full mt-3 flex items-center justify-center gap-2 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-950 rounded-lg font-medium transition-colors text-xs"
+            >
+              {copied ? (
+                <>
+                  <Check className="w-4 h-4" />
+                  Copied!
+                </>
+              ) : (
+                <>
+                  <Copy className="w-4 h-4" />
+                  Copy JSON
+                </>
+              )}
+            </button>
+          )}
         </div>
       </div>
     </div>

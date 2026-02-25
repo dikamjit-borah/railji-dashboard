@@ -262,6 +262,7 @@ export default function PaperDetailsPage() {
             setStage('details')
           }}
           initialQuestions={currentPaper.jsonFile?.content}
+          allowJsonEdit={true}
         />
       ) : (
         <div className="ml-56 bg-slate-50 min-h-screen">
