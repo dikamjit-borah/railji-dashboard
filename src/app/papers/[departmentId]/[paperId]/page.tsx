@@ -106,7 +106,28 @@ export default function PaperDetailsPage() {
       
       if (result.success && result.data) {
         const paper = result.data.paperDetails
-        const questions = result.data.questions || []
+        let questions = result.data.questions || []
+        
+        // Fetch answers and merge with questions
+        const answersResponse = await fetch(API_ENDPOINTS.paperAnswers(departmentId, paperId))
+        if (!answersResponse.ok) {
+          throw new Error('Failed to fetch answers')
+        }
+        
+        const answersResult = await answersResponse.json()
+        if (!answersResult.success || !answersResult.data?.answers) {
+          throw new Error('Invalid answers response format')
+        }
+        
+        const answersMap = new Map(
+          answersResult.data.answers.map((ans: { id: number; correct: number }) => [ans.id, ans.correct])
+        )
+        
+        // Map answers to questions
+        questions = questions.map((q: any) => ({
+          ...q,
+          correct: answersMap.get(q.id) ?? q.correct
+        }))
         
         // Populate currentPaper with fetched data
         setCurrentPaper({

@@ -17,7 +17,9 @@ export const API_ENDPOINTS = {
   paperDetail: (departmentId: string, paperId: string) => 
     `${BUSINESS_API_BASE_URL}/papers/${departmentId}/${paperId}`,
   togglePaper: (paperId: string) => `${BUSINESS_API_BASE_URL}/papers/${paperId}/toggle`,
-  
+   paperAnswers: (departmentId: string, paperId: string) => 
+    `${BUSINESS_API_BASE_URL}/papers/${departmentId}/${paperId}/answers`,
+   
   // Papers - Dashboard API (Write operations)
   createPaper: `${DASHBOARD_API_BASE_URL}/papers/create`,
   updatePaper: (paperId: string) => `${DASHBOARD_API_BASE_URL}/papers/${paperId}`,
