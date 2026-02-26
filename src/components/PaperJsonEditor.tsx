@@ -10,6 +10,7 @@ interface Question {
   ques_hi?: string
   options: Array<{ en: string; hi: string }>
   correct: string | number
+  details?: Array<{ en: string; hi: string }>
 }
 
 interface NormalizedQuestion {
@@ -17,6 +18,7 @@ interface NormalizedQuestion {
   question: { en: string; hi: string }
   options: Array<{ en: string; hi: string }>
   correct: number
+  details: Array<{ en: string; hi: string }>
 }
 
 export function PaperJsonEditor({ 
@@ -51,6 +53,7 @@ export function PaperJsonEditor({
         question: q.question || { en: q.ques || 'Question', hi: q.ques_hi || 'प्रश्न' },
         options: q.options || [],
         correct: correctValue,
+        details: q.details || [],
       }
     })
   }
@@ -105,6 +108,16 @@ export function PaperJsonEditor({
               [lang]: value
             }
             newQuestions[questionIndex] = updatedQuestion
+          } else if (type === 'detail') {
+            const detailIndex = parseInt(rest[0])
+            const lang = rest[1] as 'en' | 'hi'
+            const updatedQuestion = { ...newQuestions[questionIndex] }
+            updatedQuestion.details = [...updatedQuestion.details]
+            updatedQuestion.details[detailIndex] = {
+              ...updatedQuestion.details[detailIndex],
+              [lang]: value
+            }
+            newQuestions[questionIndex] = updatedQuestion
           }
         })
         
@@ -136,6 +149,7 @@ export function PaperJsonEditor({
             question: q.question,
             options: q.options,
             correct: q.correct,
+            details: q.details.length > 0 ? q.details : undefined,
           })),
         }
       : questions.map((q, index) => ({
@@ -143,6 +157,7 @@ export function PaperJsonEditor({
           question: q.question,
           options: q.options,
           correct: q.correct,
+          details: q.details.length > 0 ? q.details : undefined,
         }))
   }, [questions, initialQuestions])
 
@@ -191,6 +206,7 @@ export function PaperJsonEditor({
         { en: 'Option D', hi: 'विकल्प D' },
       ],
       correct: 0,
+      details: [],
     }
     setQuestions(prev => [...prev, newQuestion])
   }, [questions.length])
@@ -225,6 +241,32 @@ export function PaperJsonEditor({
   const updateQuestionText = useCallback((qIndex: number, lang: 'en' | 'hi', value: string) => {
     scheduleUpdate(`question-${qIndex}-${lang}`, value)
   }, [scheduleUpdate])
+
+  const updateDetail = useCallback((qIndex: number, dIndex: number, lang: 'en' | 'hi', value: string) => {
+    scheduleUpdate(`detail-${qIndex}-${dIndex}-${lang}`, value)
+  }, [scheduleUpdate])
+
+  const addDetail = useCallback((qIndex: number) => {
+    setQuestions(prev => {
+      const newQuestions = [...prev]
+      newQuestions[qIndex] = {
+        ...newQuestions[qIndex],
+        details: [...newQuestions[qIndex].details, { en: '', hi: '' }]
+      }
+      return newQuestions
+    })
+  }, [])
+
+  const deleteDetail = useCallback((qIndex: number, dIndex: number) => {
+    setQuestions(prev => {
+      const newQuestions = [...prev]
+      newQuestions[qIndex] = {
+        ...newQuestions[qIndex],
+        details: newQuestions[qIndex].details.filter((_, i) => i !== dIndex)
+      }
+      return newQuestions
+    })
+  }, [])
 
   const copyToClipboard = useCallback(() => {
     navigator.clipboard.writeText(jsonText)
@@ -438,6 +480,66 @@ export function PaperJsonEditor({
                           </option>
                         ))}
                       </select>
+                    </div>
+
+                    {/* Details */}
+                    <div>
+                      <div className="flex items-center justify-between mb-3">
+                        <label className="block text-sm font-semibold text-slate-950">
+                          Details (Optional)
+                        </label>
+                        <button
+                          onClick={() => addDetail(qIndex)}
+                          className="text-xs px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded font-medium transition-colors"
+                        >
+                          + Add Detail
+                        </button>
+                      </div>
+                      {question.details.length > 0 ? (
+                        <div className="space-y-3">
+                          {question.details.map((detail, dIndex) => (
+                            <div
+                              key={`d-${qIndex}-${dIndex}`}
+                              className="p-3 rounded-lg border bg-blue-50 border-blue-200"
+                            >
+                              <div className="flex items-center gap-3 mb-2">
+                                <span className="text-sm font-semibold text-slate-500 w-6">
+                                  {dIndex + 1}.
+                                </span>
+                                <input
+                                  type="text"
+                                  placeholder="English"
+                                  defaultValue={detail.en}
+                                  onChange={(e) =>
+                                    updateDetail(qIndex, dIndex, 'en', e.target.value)
+                                  }
+                                  className="flex-1 px-2 py-1 bg-white border border-slate-200 rounded text-slate-950 text-sm focus:outline-none focus:border-slate-400"
+                                />
+                                <button
+                                  onClick={() => deleteDetail(qIndex, dIndex)}
+                                  className="p-1 hover:bg-red-100 rounded text-red-600 transition-colors"
+                                  title="Delete detail"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
+                              <div className="flex items-center gap-3 ml-8">
+                                <input
+                                  type="text"
+                                  placeholder="Hindi"
+                                  defaultValue={detail.hi}
+                                  onChange={(e) =>
+                                    updateDetail(qIndex, dIndex, 'hi', e.target.value)
+                                  }
+                                  className="flex-1 px-2 py-1 bg-white border border-slate-200 rounded text-slate-950 text-sm focus:outline-none focus:border-slate-400"
+                                />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-slate-500 italic">No details added</p>
+                      )}
                     </div>
 
                     {/* Delete Button */}
