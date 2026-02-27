@@ -1,5 +1,10 @@
-const BUSINESS_API_BASE_URL = 'https://railji-business.onrender.com/business/v1'
-const DASHBOARD_API_BASE_URL = 'https://railji-dashboard.onrender.com/dashboard/v1'
+// Base URLs come from environment variables (for Next.js use NEXT_PUBLIC_*)
+const BUSINESS_API_BASE_URL =
+  process.env.NEXT_PUBLIC_BUSINESS_API_BASE_URL ||
+  'https://railji-business.onrender.com/business/v1'
+const DASHBOARD_API_BASE_URL =
+  process.env.NEXT_PUBLIC_DASHBOARD_API_BASE_URL ||
+  'https://railji-dashboard.onrender.com/dashboard/v1'
 
 export const API_ENDPOINTS = {
   // Departments
