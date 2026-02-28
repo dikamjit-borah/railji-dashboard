@@ -384,6 +384,11 @@ export function PapersSection() {
                                   {paper.updatedAt && (
                                     <span>Updated {new Date(paper.updatedAt).toLocaleDateString()}</span>
                                   )}
+                                  {(paper as any).metadata?.filename && (
+                                    <span className="bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded">
+                                      {(paper as any).metadata.filename}
+                                    </span>
+                                  )}
                                 </div>
                               </div>
                               <div className="flex items-center gap-2 ml-4">

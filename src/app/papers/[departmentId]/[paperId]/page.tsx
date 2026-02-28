@@ -143,7 +143,7 @@ export default function PaperDetailsPage() {
           duration: paper.duration ?? '',
           isFree: paper.isFree || false,
           jsonFile: {
-            name: 'questions.json',
+            name: (paper as any).metadata?.filename || 'questions.json',
             size: `${(JSON.stringify(questions).length / 1024).toFixed(1)} KB`,
             uploadTime: 'loaded from server',
             content: { questions },
@@ -179,6 +179,9 @@ export default function PaperDetailsPage() {
         duration: Number(currentPaper.duration),
         isFree: currentPaper.isFree,
         questions,
+        /* metadata: {
+          filename: currentPaper.jsonFile?.name || '',
+        }, */
       }
 
       const response = await fetch(
@@ -262,13 +265,22 @@ export default function PaperDetailsPage() {
             setStage('details')
           }}
           initialQuestions={currentPaper.jsonFile?.content}
+          fileName={currentPaper.jsonFile?.name}
           allowJsonEdit={true}
         />
       ) : (
         <div className="ml-56 bg-slate-50 min-h-screen">
           <PageHeader
             title="Paper Details"
-            subtitle="Update paper information"
+            subtitle={
+              currentPaper.jsonFile ? (
+                <>
+                  File: <span className="font-semibold text-slate-950 bg-yellow-100 px-2 py-0.5 rounded">{currentPaper.jsonFile.name}</span>
+                </>
+              ) : (
+                'Update paper information'
+              )
+            }
           />
           <div className="px-8 py-12">
             <PaperDetailsForm
