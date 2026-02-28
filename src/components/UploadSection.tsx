@@ -120,6 +120,9 @@ export function UploadSection() {
         duration: Number(currentPaper.duration),
         isFree: currentPaper.isFree,
         questions,
+        metadata: {
+          filename: currentPaper.jsonFile?.name || '',
+        },
       }
 
       const response = await fetch(API_ENDPOINTS.createPaper, {
