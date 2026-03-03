@@ -6,6 +6,7 @@ import { PageHeader } from './PageHeader'
 import { PaperJsonEditor } from './PaperJsonEditor'
 import { PaperDetailsForm } from './PaperDetailsForm'
 import { API_ENDPOINTS } from '@/lib/api'
+import { getSession } from '@/lib/auth'
 
 interface PaperData {
   paperType: 'sectional' | 'full' | 'general' | ''
@@ -100,6 +101,10 @@ export function UploadSection() {
   const createPaper = async () => {
     setCreatingPaper(true)
     try {
+      // Get current user session
+      const session = getSession()
+      const username = session?.username || 'unknown'
+
       // Extract questions from JSON file
       const questions = currentPaper.jsonFile?.content?.questions || []
       
@@ -120,6 +125,7 @@ export function UploadSection() {
         duration: Number(currentPaper.duration),
         isFree: currentPaper.isFree,
         questions,
+        username,
         metadata: {
           filename: currentPaper.jsonFile?.name || '',
         },

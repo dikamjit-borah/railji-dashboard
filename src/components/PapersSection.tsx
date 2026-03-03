@@ -384,16 +384,31 @@ export function PapersSection() {
                               className="px-6 py-4 hover:bg-slate-50 transition-colors flex items-center justify-between group"
                             >
                               <div className="flex-1 min-w-0">
-                                <h4 className="font-medium text-slate-950 truncate">{paper.name}</h4>
-                                <div className="flex items-center gap-4 mt-2 text-xs text-slate-500">
-                                  {paper.paperCode && (
-                                    <span>Code: {paper.paperCode}</span>
-                                  )}
+                                <div className="flex items-center gap-2">
+                                  <h4 className="font-medium text-slate-950 truncate">{paper.name}</h4>
                                   {paper.paperType && (
-                                    <span className="capitalize">{paper.paperType}</span>
+                                    <span className="text-xs capitalize bg-blue-100 text-blue-800 px-2 py-0.5 rounded">
+                                      {paper.paperType}
+                                    </span>
+                                  )}
+                                  {paper.paperCode && (
+                                    <span className="text-xs bg-slate-100 text-slate-700 px-2 py-0.5 rounded">
+                                      {paper.paperCode}
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-4 mt-2 text-xs text-slate-500">
+                                  {paper.createdAt && (
+                                    <span>Created {new Date(paper.createdAt).toLocaleDateString()}</span>
                                   )}
                                   {paper.updatedAt && (
                                     <span>Updated {new Date(paper.updatedAt).toLocaleDateString()}</span>
+                                  )}
+                                  {(paper as any).createdBy && (
+                                    <span>By: {(paper as any).createdBy}</span>
+                                  )}
+                                  {(paper as any).updatedBy && (
+                                    <span>Updated By: {(paper as any).updatedBy}</span>
                                   )}
                                   {(paper as any).metadata?.filename && (
                                     <span className="bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded">

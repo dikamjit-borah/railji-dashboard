@@ -7,6 +7,7 @@ import { PageHeader } from '@/components/PageHeader'
 import { PaperJsonEditor } from '@/components/PaperJsonEditor'
 import { PaperDetailsForm } from '@/components/PaperDetailsForm'
 import { API_ENDPOINTS } from '@/lib/api'
+import { getSession } from '@/lib/auth'
 
 interface PaperData {
   paperType: 'sectional' | 'full' | 'general' | ''
@@ -162,6 +163,10 @@ export default function PaperDetailsPage() {
   const updatePaper = async () => {
     setUpdatingPaper(true)
     try {
+      // Get current user session
+      const session = getSession()
+      const username = session?.username || 'unknown'
+
       const questions = currentPaper.jsonFile?.content?.questions || []
       const totalQuestions = questions.length
 
@@ -179,6 +184,7 @@ export default function PaperDetailsPage() {
         duration: Number(currentPaper.duration),
         isFree: currentPaper.isFree,
         questions,
+        username,
         /* metadata: {
           filename: currentPaper.jsonFile?.name || '',
         }, */
