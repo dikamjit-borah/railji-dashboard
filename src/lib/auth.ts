@@ -4,8 +4,8 @@ export interface User {
 }
 
 export function validateCredentials(username: string, password: string): User | null {
-  const envUsername = process.env.NEXT_PUBLIC_ADMIN_USERNAME;
-  const envPassword = process.env.NEXT_PUBLIC_ADMIN_PASSWORD;
+  const envUsername = process.env.NEXT_PUBLIC_DASHBOARD_USERNAME;
+  const envPassword = process.env.NEXT_PUBLIC_DASHBOARD_PASSWORD;
 
   if (username === envUsername && password === envPassword) {
     return { username, userType: 'admin' };

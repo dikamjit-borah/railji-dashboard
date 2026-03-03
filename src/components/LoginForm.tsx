@@ -38,7 +38,7 @@ export default function LoginForm({ onLoginSuccess }: LoginFormProps) {
             </div>
             <h1 className="text-2xl font-bold tracking-tight text-slate-900">Railji</h1>
           </div>
-          <p className="text-sm text-slate-600">Paper Dashboard</p>
+          <p className="text-sm text-slate-600">Admin Dashboard</p>
           <div className="track mt-6"></div>
         </div>
 

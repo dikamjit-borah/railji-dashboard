@@ -48,7 +48,7 @@ export function Sidebar({ isOpen = true, onClose, onLogout }: SidebarProps) {
             </div>
             <h1 className="text-lg font-bold tracking-tight">Railji</h1>
           </div>
-          <p className="text-xs text-slate-400 mt-2">Paper Dashboard</p>
+          <p className="text-xs text-slate-400 mt-2">Admin Dashboard</p>
         </div>
 
       {/* Navigation */}
