@@ -16,7 +16,12 @@ export function useMenu() {
   return context
 }
 
-export function LayoutWrapper({ children }: { children: ReactNode }) {
+interface LayoutWrapperProps {
+  children: ReactNode
+  onLogout?: () => void
+}
+
+export function LayoutWrapper({ children, onLogout }: LayoutWrapperProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   return (
@@ -24,12 +29,12 @@ export function LayoutWrapper({ children }: { children: ReactNode }) {
       <div className="flex h-screen bg-slate-50">
         {/* Sidebar - Desktop always visible, Mobile as drawer */}
         <div className="hidden md:block">
-          <Sidebar isOpen={true} />
+          <Sidebar isOpen={true} onLogout={onLogout} />
         </div>
 
         {/* Mobile drawer */}
         <div className="md:hidden">
-          <Sidebar isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} />
+          <Sidebar isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} onLogout={onLogout} />
         </div>
 
         <main className="md:ml-56 flex-1 overflow-auto flex flex-col w-full">

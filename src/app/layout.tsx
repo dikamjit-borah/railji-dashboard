@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 //import { Sidebar } from '@/components/Sidebar'
 import '@/globals.css'
-import { LayoutWrapper } from '@/components/LayoutWrapper'
+import AuthProvider from '@/components/AuthProvider'
 
 export const metadata: Metadata = {
   title: 'Railji Dashboard',
@@ -16,9 +16,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased">
-        <LayoutWrapper>
+        <AuthProvider>
           {children}
-        </LayoutWrapper>
+        </AuthProvider>
       </body>
     </html>
   )

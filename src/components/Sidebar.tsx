@@ -2,14 +2,15 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { FileText, BookOpen, Users, Home, BarChart3, X } from 'lucide-react'
+import { FileText, BookOpen, Users, Home, BarChart3, X, LogOut } from 'lucide-react'
 
 interface SidebarProps {
   isOpen?: boolean
   onClose?: () => void
+  onLogout?: () => void
 }
 
-export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
+export function Sidebar({ isOpen = true, onClose, onLogout }: SidebarProps) {
   const pathname = usePathname()
 
   const isActive = (path: string) => pathname === path
@@ -105,12 +106,24 @@ export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
       </nav>
 
       {/* Footer */}
-      <div className="px-4 py-6 border-t border-slate-700 space-y-2">
-        <p className="text-xs text-slate-400">System Status</p>
-        <div className="flex items-center gap-2">
-          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-          <p className="text-xs text-slate-300">All systems operational</p>
+      <div className="px-4 py-6 border-t border-slate-700 space-y-4">
+        <div className="space-y-2">
+          <p className="text-xs text-slate-400">System Status</p>
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+            <p className="text-xs text-slate-300">All systems operational</p>
+          </div>
         </div>
+        
+        {onLogout && (
+          <button
+            onClick={onLogout}
+            className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-slate-100 transition-colors duration-200"
+          >
+            <LogOut className="w-4 h-4" />
+            Sign Out
+          </button>
+        )}
       </div>
     </aside>
     </>
