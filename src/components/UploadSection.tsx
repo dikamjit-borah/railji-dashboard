@@ -65,10 +65,10 @@ export function UploadSection() {
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       const file = e.dataTransfer.files[0]
       
-      // Check file size (10 MB limit)
-      const maxSize = 10 * 1024 * 1024 // 10 MB in bytes
+      // Check file size (5 MB limit)
+      const maxSize = 5 * 1024 * 1024 // 5 MB in bytes
       if (file.size > maxSize) {
-        alert('File is too large. Maximum file size is 10 MB.')
+        alert('File is too large. Maximum file size is 5 MB.')
         return
       }
       
@@ -177,10 +177,10 @@ export function UploadSection() {
     if (files && files[0]) {
       const file = files[0]
       
-      // Check file size (10 MB limit)
-      const maxSize = 10 * 1024 * 1024 // 10 MB in bytes
+      // Check file size (5 MB limit)
+      const maxSize = 5 * 1024 * 1024 // 5 MB in bytes
       if (file.size > maxSize) {
-        alert('File is too large. Maximum file size is 10 MB.')
+        alert('File is too large. Maximum file size is 5 MB.')
         e.target.value = '' // Reset input
         return
       }
@@ -330,7 +330,7 @@ export function UploadSection() {
 
               <div className="text-xs text-slate-600 space-y-1">
                 <p>• Supported format: JSON only</p>
-                <p>• Maximum file size: 10 MB</p>
+                <p>• Maximum file size: 5 MB</p>
               </div>
 
               {/* Button */}
