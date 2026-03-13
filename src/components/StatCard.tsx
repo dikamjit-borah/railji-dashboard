@@ -1,5 +1,3 @@
-import { ArrowUpRight, ArrowDownRight } from 'lucide-react'
-
 interface StatCardProps {
   label: string
   value: string
@@ -7,7 +5,7 @@ interface StatCardProps {
   change: string
 }
 
-export function StatCard({ label, value, icon: Icon, change }: StatCardProps) {
+export function StatCard({ label, value, icon: Icon }: StatCardProps) {
   //const isPositive = change.startsWith('+')
 
   return (
