@@ -194,7 +194,7 @@ export function RecentUploads(props: RecentUploadsProps) {
                 userCounts.map((user, idx) => (
                   <tr key={idx} className="border-b border-slate-100 hover:bg-slate-50">
                     <td className="px-6 py-3 text-slate-950 font-medium">
-                      {String(user.username) === 'null' || user.username === null ? 'Anonymous' : user.username}
+                      {String(user.username) === 'null' || user.username === null ? 'NA' : user.username}
                     </td>
                     <td className="px-6 py-3 text-right">
                       <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 text-slate-950 font-semibold text-sm">
