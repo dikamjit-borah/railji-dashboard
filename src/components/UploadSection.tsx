@@ -41,7 +41,7 @@ export function UploadSection() {
     passPercentage: 70,
     negativeMarks: 0.33,
     duration: 120,
-    isFree: true,
+    isFree: false,
     jsonFile: null,
   })
   const [isDragActive, setIsDragActive] = useState<string | null>(null)
@@ -160,7 +160,7 @@ export function UploadSection() {
         passPercentage: 70,
         negativeMarks: 0.33,
         duration: 120,
-        isFree: true,
+        isFree: false,
         jsonFile: null,
       })
       setStage('upload')
