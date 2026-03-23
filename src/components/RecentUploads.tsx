@@ -1,6 +1,7 @@
 'use client';
 
-import { API_ENDPOINTS } from '@/lib/api';
+import { API_ENDPOINTS } from '@/lib/api'
+import { apiClient } from '@/lib/api-client';
 import { useEffect, useState } from 'react';
 
 interface Activity {
@@ -76,8 +77,7 @@ export function RecentUploads(props: RecentUploadsProps) {
       try {
         const { startDate, endDate } = getDateRange(dateFilter);
         const url = `${API_ENDPOINTS.paperLogs}?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`;
-        const response = await fetch(url);
-        const result = await response.json();
+        const result = await apiClient.get(url);
         if (result.success && result.data) {
           const { recentActivity, paperUploadCount, totalPapers, totalUsers } = result.data as ApiResponse;
           setActivities(recentActivity || []);

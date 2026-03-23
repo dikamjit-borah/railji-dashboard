@@ -5,8 +5,10 @@ import { Upload, Check } from 'lucide-react'
 import { PageHeader } from './PageHeader'
 import { PaperJsonEditor } from './PaperJsonEditor'
 import { PaperDetailsForm } from './PaperDetailsForm'
+import { ToastContainer, useToast } from './Toast'
 import { API_ENDPOINTS } from '@/lib/api'
 import { getSession } from '@/lib/auth'
+import { apiClient } from '@/lib/api-client'
 
 interface PaperData {
   paperType: 'sectional' | 'full' | 'general' | ''
@@ -46,6 +48,7 @@ export function UploadSection() {
   })
   const [isDragActive, setIsDragActive] = useState<string | null>(null)
   const [creatingPaper, setCreatingPaper] = useState(false)
+  const toast = useToast()
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault()
@@ -68,7 +71,7 @@ export function UploadSection() {
       // Check file size (5 MB limit)
       const maxSize = 5 * 1024 * 1024 // 5 MB in bytes
       if (file.size > maxSize) {
-        alert('File is too large. Maximum file size is 5 MB.')
+        toast.error('File is too large. Maximum file size is 5 MB.')
         return
       }
       
@@ -86,12 +89,12 @@ export function UploadSection() {
             }
             setCurrentPaper({ ...currentPaper, jsonFile: fileData })
           } catch (error) {
-            alert('Invalid JSON file. Please upload a valid JSON file.')
+            toast.error('Invalid JSON file. Please upload a valid JSON file.')
             console.error('JSON parse error:', error)
           }
         }
         reader.onerror = () => {
-          alert('Failed to read file. Please try again.')
+          toast.error('Failed to read file. Please try again.')
         }
         reader.readAsText(file)
       }
@@ -131,21 +134,13 @@ export function UploadSection() {
         },
       }
 
-      const response = await fetch(API_ENDPOINTS.createPaper, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      })
+      const result = await apiClient.post(API_ENDPOINTS.createPaper, payload)
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
-        throw new Error(errorData.message || `API error: ${response.statusText}`)
+      if (!result.success) {
+        throw new Error(result.message || 'API error occurred')
       }
 
-      const result = await response.json()
-      alert('Paper created successfully!')
+      toast.success('Paper created successfully!')
       console.log('Paper created:', result)
 
       // Reset form after successful creation
@@ -166,7 +161,7 @@ export function UploadSection() {
       setStage('upload')
     } catch (error) {
       console.error('Failed to create paper:', error)
-      alert(`Failed to create paper: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      toast.error(`Failed to create paper: ${error instanceof Error ? error.message : 'Unknown error'}`)
     } finally {
       setCreatingPaper(false)
     }
@@ -180,7 +175,7 @@ export function UploadSection() {
       // Check file size (5 MB limit)
       const maxSize = 5 * 1024 * 1024 // 5 MB in bytes
       if (file.size > maxSize) {
-        alert('File is too large. Maximum file size is 5 MB.')
+        toast.error('File is too large. Maximum file size is 5 MB.')
         e.target.value = '' // Reset input
         return
       }
@@ -199,14 +194,14 @@ export function UploadSection() {
           setCurrentPaper({ ...currentPaper, jsonFile: fileData })
           e.target.value = '' // Reset input after successful upload
         } catch (error) {
-          alert('Invalid JSON file. Please upload a valid JSON file.')
+          toast.error('Invalid JSON file. Please upload a valid JSON file.')
           console.error('JSON parse error:', error)
           e.target.value = '' // Reset input on error
         }
       }
       
       reader.onerror = () => {
-        alert('Failed to read file. Please try again.')
+        toast.error('Failed to read file. Please try again.')
         e.target.value = '' // Reset input on error
       }
       
@@ -353,6 +348,7 @@ export function UploadSection() {
           </div>
         </div>
       )}
+      <ToastContainer toasts={toast.toasts} onRemove={toast.removeToast} />
     </>
   )
 }

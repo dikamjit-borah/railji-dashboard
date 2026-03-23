@@ -9,6 +9,8 @@ interface PageHeaderProps {
   action?: {
     label: string
     onClick: () => void
+    icon?: React.ComponentType<{ className?: string }>
+    disabled?: boolean
   }
 }
 
@@ -38,8 +40,12 @@ export function PageHeader({ title, subtitle, action }: PageHeaderProps) {
         {action && (
           <button
             onClick={action.onClick}
-            className="btn-minimal-primary"
+            disabled={action.disabled}
+            className={`btn-minimal-primary inline-flex items-center gap-2 ${
+              action.disabled ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
           >
+            {action.icon && <action.icon className={`w-4 h-4 ${action.disabled ? '' : ''}`} />}
             {action.label}
           </button>
         )}

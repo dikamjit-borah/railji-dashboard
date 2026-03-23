@@ -3,8 +3,10 @@
 import { useState, useEffect, useRef } from 'react'
 import { Trash2, ChevronDown, ChevronRight, Loader2, AlertCircle, ToggleLeft, ToggleRight, ChevronLeft } from 'lucide-react'
 import { PageHeader } from './PageHeader'
+import { ToastContainer, useToast } from './Toast'
 import { useRouter } from 'next/navigation'
 import { API_ENDPOINTS } from '@/lib/api'
+import { apiClient } from '@/lib/api-client'
 import { getSession } from '@/lib/auth'
 
 interface Department {
@@ -64,6 +66,7 @@ export function PapersSection() {
   const [deletingPaper, setDeletingPaper] = useState<string | null>(null)
   const [togglingPaper, setTogglingPaper] = useState<string | null>(null)
   const hasFetched = useRef(false)
+  const toast = useToast()
 
   useEffect(() => {
     if (!hasFetched.current) {
@@ -76,20 +79,19 @@ export function PapersSection() {
     setLoadingDepts(true)
     setError(null)
     try {
-      const response = await fetch(API_ENDPOINTS.departments)
-      if (!response.ok) throw new Error('Failed to fetch departments')
-      const data = await response.json()
+      const result = await apiClient.get(API_ENDPOINTS.departments)
+      if (!result.success) throw new Error('Failed to fetch departments')
       
       // Handle different response formats
       let depts: Department[] = []
-      if (Array.isArray(data)) {
-        depts = data
-      } else if (data.data && Array.isArray(data.data)) {
-        depts = data.data
-      } else if (data.departments && Array.isArray(data.departments)) {
-        depts = data.departments
+      if (Array.isArray(result.data)) {
+        depts = result.data
+      } else if (result.data?.data && Array.isArray(result.data.data)) {
+        depts = result.data.data
+      } else if (result.data?.departments && Array.isArray(result.data.departments)) {
+        depts = result.data.departments
       } else {
-        console.error('Unexpected response format:', data)
+        console.error('Unexpected response format:', result.data)
         depts = []
       }
       
@@ -121,24 +123,23 @@ export function PapersSection() {
   const fetchPapersForDept = async (deptId: string, page: number = 1) => {
     setLoadingPapers(prev => new Set(prev).add(deptId))
     try {
-      const response = await fetch(API_ENDPOINTS.papers(deptId, page))
-      if (!response.ok) throw new Error('Failed to fetch papers')
-      const result = await response.json()
+      const result = await apiClient.get(API_ENDPOINTS.papers(deptId, page))
+      if (!result.success) throw new Error('Failed to fetch papers')
       
       // Extract papers from nested response structure
       let papers: Paper[] = []
       let pagination: PaginationInfo | null = null
       
-      if (result.data && result.data.papers && Array.isArray(result.data.papers)) {
+      if (result.data?.data && result.data.data.papers && Array.isArray(result.data.data.papers)) {
+        papers = result.data.data.papers
+        pagination = result.data.data.pagination
+      } else if (result.data?.papers && Array.isArray(result.data.papers)) {
         papers = result.data.papers
         pagination = result.data.pagination
-      } else if (result.papers && Array.isArray(result.papers)) {
-        papers = result.papers
-        pagination = result.pagination
+      } else if (Array.isArray(result.data?.data)) {
+        papers = result.data.data
       } else if (Array.isArray(result.data)) {
         papers = result.data
-      } else if (Array.isArray(result)) {
-        papers = result
       }
       
       setPapersByDept(prev => ({ ...prev, [deptId]: papers }))
@@ -162,24 +163,23 @@ export function PapersSection() {
     const deptId = 'GENERAL'
     setLoadingPapers(prev => new Set(prev).add(deptId))
     try {
-      const response = await fetch(API_ENDPOINTS.generalPapers(page))
-      if (!response.ok) throw new Error('Failed to fetch general papers')
-      const result = await response.json()
+      const result = await apiClient.get(API_ENDPOINTS.generalPapers(page))
+      if (!result.success) throw new Error('Failed to fetch general papers')
       
       // Extract papers from nested response structure
       let papers: Paper[] = []
       let pagination: PaginationInfo | null = null
       
-      if (result.data && result.data.papers && Array.isArray(result.data.papers)) {
+      if (result.data?.data && result.data.data.papers && Array.isArray(result.data.data.papers)) {
+        papers = result.data.data.papers
+        pagination = result.data.data.pagination
+      } else if (result.data?.papers && Array.isArray(result.data.papers)) {
         papers = result.data.papers
         pagination = result.data.pagination
-      } else if (result.papers && Array.isArray(result.papers)) {
-        papers = result.papers
-        pagination = result.pagination
+      } else if (Array.isArray(result.data?.data)) {
+        papers = result.data.data
       } else if (Array.isArray(result.data)) {
         papers = result.data
-      } else if (Array.isArray(result)) {
-        papers = result
       }
       
       setPapersByDept(prev => ({ ...prev, [deptId]: papers }))
@@ -231,26 +231,21 @@ export function PapersSection() {
     try {
       const user = getSession()
       if (!user) {
-        alert('User not authenticated')
+        toast.error('User not authenticated')
         return
       }
       
-      const response = await fetch(API_ENDPOINTS.deletePaper(paperId), {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ username: user.username }),
-      })
-      if (!response.ok) throw new Error('Failed to delete paper')
+      const result = await apiClient.delete(API_ENDPOINTS.deletePaper(paperId), { username: user.username })
+      if (!result.success) throw new Error('Failed to delete paper')
       
       // Remove from local state using paperId
       setPapersByDept(prev => ({
         ...prev,
         [deptId]: prev[deptId].filter(p => p.paperId !== paperId)
       }))
+      toast.success('Paper deleted successfully')
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to delete paper')
+      toast.error(err instanceof Error ? err.message : 'Failed to delete paper')
     } finally {
       setDeletingPaper(null)
     }
@@ -259,14 +254,8 @@ export function PapersSection() {
   const handleTogglePaper = async (paperId: string, deptId: string, currentStatus: boolean) => {
     setTogglingPaper(paperId)
     try {
-      const response = await fetch(API_ENDPOINTS.togglePaper(paperId), {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ isActive: !currentStatus }),
-      })
-      if (!response.ok) throw new Error('Failed to toggle paper status')
+      const result = await apiClient.patch(API_ENDPOINTS.togglePaper(paperId), { isActive: !currentStatus })
+      if (!result.success) throw new Error('Failed to toggle paper status')
       
       // Update local state using paperId
       setPapersByDept(prev => ({
@@ -275,8 +264,9 @@ export function PapersSection() {
           p.paperId === paperId ? { ...p, isActive: !currentStatus } : p
         )
       }))
+      toast.success(`Paper ${!currentStatus ? 'activated' : 'deactivated'} successfully`)
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to toggle paper status')
+      toast.error(err instanceof Error ? err.message : 'Failed to toggle paper status')
     } finally {
       setTogglingPaper(null)
     }
@@ -526,6 +516,7 @@ export function PapersSection() {
           </div>
         )}
       </div>
+      <ToastContainer toasts={toast.toasts} onRemove={toast.removeToast} />
     </div>
   )
 }

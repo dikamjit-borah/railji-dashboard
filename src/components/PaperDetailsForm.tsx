@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { API_ENDPOINTS } from '@/lib/api'
+import { apiClient } from '@/lib/api-client'
 
 interface PaperData {
   paperType: 'sectional' | 'full' | 'general' | ''
@@ -94,11 +95,10 @@ export function PaperDetailsForm({
   const fetchDepartments = async () => {
     setLoadingDepartments(true)
     try {
-      const response = await fetch(API_ENDPOINTS.departments)
-      const data = await response.json()
+      const result = await apiClient.get(API_ENDPOINTS.departments)
       
-      if (data.success && data.data) {
-        setDepartments(data.data)
+      if (result.success && result.data) {
+        setDepartments(result.data)
       } else {
         throw new Error('Invalid response format')
       }
@@ -113,14 +113,14 @@ export function PaperDetailsForm({
   const fetchPaperCodes = async (departmentId: string, paperType: string) => {
     setLoadingCodes(true)
     try {
-      const response = await fetch(API_ENDPOINTS.papersByType(departmentId, paperType))
-      const data = await response.json()
+      const result = await apiClient.get(API_ENDPOINTS.papersByType(departmentId, paperType))
 
-      if (data.success && data.data?.metadata?.paperCodes) {
-        const codes = data.data.metadata.paperCodes.nonGeneral || []
+      if (result.success && result.data?.metadata?.paperCodes?.nonGeneral) {
+        const codes = result.data.metadata.paperCodes.nonGeneral
         setPaperCodes(codes)
       } else {
-        throw new Error('Invalid response format')
+        console.error('Failed to fetch paper codes:', result)
+        setPaperCodes([])
       }
     } catch (error) {
       console.error('Failed to fetch paper codes:', error)
@@ -133,14 +133,14 @@ export function PaperDetailsForm({
   const fetchGeneralPaperCodes = async (paperType: string) => {
     setLoadingCodes(true)
     try {
-      const response = await fetch(API_ENDPOINTS.generalPapersByType(paperType))
-      const data = await response.json()
+      const result = await apiClient.get(API_ENDPOINTS.generalPapersByType(paperType))
 
-      if (data.success && data.data?.metadata?.paperCodes) {
-        const codes = data.data.metadata.paperCodes.general || []
+      if (result.success && result.data?.metadata?.paperCodes?.general) {
+        const codes = result.data.metadata.paperCodes.general
         setPaperCodes(codes)
       } else {
-        throw new Error('Invalid response format')
+        console.error('Failed to fetch general paper codes:', result)
+        setPaperCodes([])
       }
     } catch (error) {
       console.error('Failed to fetch general paper codes:', error)
