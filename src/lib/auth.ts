@@ -1,34 +1,35 @@
 import { API_ENDPOINTS } from "./api";
+import { apiClient } from "./api-client";
 
 export interface User {
-  id: string;
+  _id: string;
   username: string;
-  userType: 'admin';
-  access_token: string;
+  userId: string;
+  supabaseId: string;
+  email: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  lastLoggedIn?: string;
+  accessToken: string;
 }
 
-export async function validateCredentials(username: string, password: string): Promise<User | null> {
+export async function validateCredentials(email: string, password: string): Promise<User | null> {
   try {
-    const response = await fetch(API_ENDPOINTS.signIn, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ username, password }),
-    });
-
-    if (!response.ok) {
-      return null;
-    }
-
-    const result = await response.json();
+    const result = await apiClient.post(API_ENDPOINTS.signIn, { email, password }, { requireAuth: false });
     
     if (result.success && result.data) {
       return {
-        id: result.data.user.id,
+        _id: result.data.user._id,
         username: result.data.user.username,
-        userType: result.data.user.userType,
-        access_token: result.data.access_token,
+        userId: result.data.user.userId,
+        supabaseId: result.data.user.supabaseId,
+        email: result.data.user.email,
+        isActive: result.data.user.isActive,
+        createdAt: result.data.user.createdAt,
+        updatedAt: result.data.user.updatedAt,
+        lastLoggedIn: result.data.user.lastLoggedIn,
+        accessToken: result.data.accessToken,
       };
     }
 
@@ -63,4 +64,9 @@ export function clearSession(): void {
   if (typeof window !== 'undefined') {
     localStorage.removeItem('auth_user');
   }
+}
+
+export function getAuthHeader(): string | null {
+  const user = getSession();
+  return user ? `Bearer ${user.accessToken}` : null;
 }

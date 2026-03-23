@@ -8,7 +8,7 @@ interface LoginFormProps {
 }
 
 export default function LoginForm({ onLoginSuccess }: LoginFormProps) {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -19,13 +19,13 @@ export default function LoginForm({ onLoginSuccess }: LoginFormProps) {
     setLoading(true);
 
     try {
-      const user = await validateCredentials(username, password);
+      const user = await validateCredentials(email, password);
       
       if (user) {
         saveSession(user);
         onLoginSuccess();
       } else {
-        setError('Invalid username or password');
+        setError('Invalid email or password');
       }
     } catch (err) {
       setError('Failed to sign in. Please try again.');
@@ -53,16 +53,16 @@ export default function LoginForm({ onLoginSuccess }: LoginFormProps) {
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div>
-              <label htmlFor="username" className="block text-sm font-medium text-slate-700 mb-1">
-                Username
+              <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-1">
+                Email
               </label>
               <input
-                id="username"
-                name="username"
-                type="text"
+                id="email"
+                name="email"
+                type="email"
                 required
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 disabled={loading}
                 className="input-minimal disabled:opacity-50"
               />
