@@ -89,18 +89,26 @@ class ApiClient {
         responseData = await response.text();
       }
 
-      // Return standardized response
+      // If response is OK, return the actual API response (don't wrap it)
       if (response.ok) {
+        // If the API already returns a standardized format, pass it through
+        if (responseData && typeof responseData === 'object' && 'success' in responseData) {
+          return responseData;
+        }
+        // Otherwise, wrap it in our standard format
         return {
           success: true,
           data: responseData,
           statusCode: response.status,
         };
       } else {
+        // For errors, try to extract message from API response or use default
+        const errorMessage = responseData?.message || responseData?.error || `HTTP ${response.status}: ${response.statusText}`;
         return {
           success: false,
-          message: responseData?.message || `HTTP ${response.status}: ${response.statusText}`,
+          message: errorMessage,
           statusCode: response.status,
+          data: responseData,
         };
       }
     } catch (error) {
