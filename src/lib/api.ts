@@ -1,14 +1,14 @@
 // Base URLs come from environment variables (for Next.js use NEXT_PUBLIC_*)
 const BUSINESS_API_BASE_URL =
   process.env.NEXT_PUBLIC_BUSINESS_API_BASE_URL ||
-  "https://railji-business.onrender.com/business/v1";
+  "https://railji-business-stage.onrender.com/business/v1";
 const DASHBOARD_API_BASE_URL =
   process.env.NEXT_PUBLIC_DASHBOARD_API_BASE_URL ||
-  "https://railji-dashboard.onrender.com/dashboard/v1";
+  "https://railji-dashboard-stage.onrender.com/dashboard/v1";
 
 export const API_ENDPOINTS = {
   // Auth
-  signIn: `${DASHBOARD_API_BASE_URL}/auth/sign-in`,
+  signIn: `${DASHBOARD_API_BASE_URL}/users/login`,
 
   // Departments
   departments: `${BUSINESS_API_BASE_URL}/departments`,
@@ -36,4 +36,13 @@ export const API_ENDPOINTS = {
   deletePaper: (paperId: string) =>
     `${DASHBOARD_API_BASE_URL}/papers/${paperId}`,
   paperLogs: `${DASHBOARD_API_BASE_URL}/papers/stats`,
+
+  // Users - Dashboard API
+  users: `${DASHBOARD_API_BASE_URL}/users`,
+  toggleUserStatus: (userId: string) =>
+    `${DASHBOARD_API_BASE_URL}/users/${userId}/toggle`,
+  userDepartments: (userId: string) =>
+    `${DASHBOARD_API_BASE_URL}/users/${userId}/departments`,
+  userPapers: (userId: string) =>
+    `${DASHBOARD_API_BASE_URL}/users/${userId}/papers`,
 };
