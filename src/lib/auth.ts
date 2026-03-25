@@ -12,7 +12,6 @@ export interface User {
   updatedAt: string;
   lastLoggedIn?: string;
   accessToken: string;
-  refreshToken?: string;
   tokenExpiry?: number; // Unix timestamp
 }
 
@@ -34,7 +33,6 @@ export async function validateCredentials(email: string, password: string): Prom
         updatedAt: result.data.user.updatedAt,
         lastLoggedIn: result.data.user.lastLoggedIn,
         accessToken: result.data.accessToken,
-        refreshToken: result.data.refreshToken,
         tokenExpiry,
       };
     }

@@ -1,14 +1,20 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { getSession, clearSession, isTokenExpired, refreshToken, type User } from '@/lib/auth';
+import { getSession, clearSession, isTokenExpired, type User } from '@/lib/auth';
+import { setTokenExpiredCallback } from '@/lib/api-client';
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [showTokenExpiredModal, setShowTokenExpiredModal] = useState(false);
 
-  const checkAndRefreshToken = useCallback(async () => {
+  const handleTokenExpired = useCallback(() => {
+    setShowTokenExpiredModal(true);
+    setUser(null);
+  }, []);
+
+  const checkTokenExpiration = useCallback(() => {
     const currentUser = getSession();
     
     if (!currentUser) {
@@ -17,57 +23,52 @@ export function useAuth() {
     }
 
     if (isTokenExpired()) {
-      if (isRefreshing) return false; // Prevent multiple refresh attempts
-      
-      setIsRefreshing(true);
-      try {
-        const refreshedUser = await refreshToken();
-        if (refreshedUser) {
-          setUser(refreshedUser);
-          return true;
-        } else {
-          clearSession();
-          setUser(null);
-          return false;
-        }
-      } finally {
-        setIsRefreshing(false);
-      }
+      handleTokenExpired();
+      return false;
     }
 
     setUser(currentUser);
     return true;
-  }, [isRefreshing]);
+  }, [handleTokenExpired]);
 
   useEffect(() => {
-    const initAuth = async () => {
-      await checkAndRefreshToken();
+    // Set up the callback for API client to trigger modal
+    setTokenExpiredCallback(handleTokenExpired);
+
+    const initAuth = () => {
+      checkTokenExpiration();
       setLoading(false);
     };
 
     initAuth();
 
-    // Set up periodic check
-    const interval = setInterval(checkAndRefreshToken, 5 * 60 * 1000);
+    // Set up periodic check (every minute)
+    const interval = setInterval(checkTokenExpiration, 60 * 1000);
     return () => clearInterval(interval);
-  }, [checkAndRefreshToken]);
+  }, [checkTokenExpiration, handleTokenExpired]);
 
   const login = useCallback((newUser: User) => {
     setUser(newUser);
+    setShowTokenExpiredModal(false);
   }, []);
 
   const logout = useCallback(() => {
     clearSession();
     setUser(null);
+    setShowTokenExpiredModal(false);
+  }, []);
+
+  const handleSignInAgain = useCallback(() => {
+    setShowTokenExpiredModal(false);
   }, []);
 
   return {
     user,
     loading,
-    isRefreshing,
     login,
     logout,
-    checkAndRefreshToken,
     isAuthenticated: !!user,
+    showTokenExpiredModal,
+    handleSignInAgain,
   };
 }
