@@ -86,10 +86,6 @@ export function PapersSection() {
       let depts: Department[] = []
       if (Array.isArray(result.data)) {
         depts = result.data
-      } else if (result.data?.data && Array.isArray(result.data.data)) {
-        depts = result.data.data
-      } else if (result.data?.departments && Array.isArray(result.data.departments)) {
-        depts = result.data.departments
       } else {
         console.error('Unexpected response format:', result.data)
         depts = []
@@ -130,16 +126,9 @@ export function PapersSection() {
       let papers: Paper[] = []
       let pagination: PaginationInfo | null = null
       
-      if (result.data?.data && result.data.data.papers && Array.isArray(result.data.data.papers)) {
-        papers = result.data.data.papers
-        pagination = result.data.data.pagination
-      } else if (result.data?.papers && Array.isArray(result.data.papers)) {
+      if (result.data && result.data.papers && Array.isArray(result.data.papers)) {
         papers = result.data.papers
         pagination = result.data.pagination
-      } else if (Array.isArray(result.data?.data)) {
-        papers = result.data.data
-      } else if (Array.isArray(result.data)) {
-        papers = result.data
       }
       
       setPapersByDept(prev => ({ ...prev, [deptId]: papers }))
@@ -170,16 +159,9 @@ export function PapersSection() {
       let papers: Paper[] = []
       let pagination: PaginationInfo | null = null
       
-      if (result.data?.data && result.data.data.papers && Array.isArray(result.data.data.papers)) {
-        papers = result.data.data.papers
-        pagination = result.data.data.pagination
-      } else if (result.data?.papers && Array.isArray(result.data.papers)) {
+      if (result.data && result.data.papers && Array.isArray(result.data.papers)) {
         papers = result.data.papers
         pagination = result.data.pagination
-      } else if (Array.isArray(result.data?.data)) {
-        papers = result.data.data
-      } else if (Array.isArray(result.data)) {
-        papers = result.data
       }
       
       setPapersByDept(prev => ({ ...prev, [deptId]: papers }))
