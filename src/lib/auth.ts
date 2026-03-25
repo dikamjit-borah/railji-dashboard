@@ -12,6 +12,8 @@ export interface User {
   updatedAt: string;
   lastLoggedIn?: string;
   accessToken: string;
+  refreshToken?: string;
+  tokenExpiry?: number; // Unix timestamp
 }
 
 export async function validateCredentials(email: string, password: string): Promise<User | null> {
@@ -19,6 +21,8 @@ export async function validateCredentials(email: string, password: string): Prom
     const result = await apiClient.post(API_ENDPOINTS.signIn, { email, password }, { requireAuth: false });
     
     if (result.success && result.data) {
+      const tokenExpiry = Date.now() + (45 * 60 * 1000); // 45 minutes from now
+      
       return {
         _id: result.data.user._id,
         username: result.data.user.username,
@@ -30,6 +34,8 @@ export async function validateCredentials(email: string, password: string): Prom
         updatedAt: result.data.user.updatedAt,
         lastLoggedIn: result.data.user.lastLoggedIn,
         accessToken: result.data.accessToken,
+        refreshToken: result.data.refreshToken,
+        tokenExpiry,
       };
     }
 
@@ -69,4 +75,19 @@ export function clearSession(): void {
 export function getAuthHeader(): string | null {
   const user = getSession();
   return user ? `Bearer ${user.accessToken}` : null;
+}
+export function isTokenExpired(): boolean {
+  const user = getSession();
+  if (!user || !user.tokenExpiry) return true;
+  
+  // Check if token expires in the next 5 minutes (buffer time)
+  return Date.now() >= (user.tokenExpiry - 5 * 60 * 1000);
+}
+
+export function updateUserSession(updates: Partial<User>): void {
+  const user = getSession();
+  if (user) {
+    const updatedUser = { ...user, ...updates };
+    saveSession(updatedUser);
+  }
 }

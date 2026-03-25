@@ -1,4 +1,18 @@
-import { getAuthHeader } from './auth';
+import { getAuthHeader, isTokenExpired, clearSession } from './auth';
+
+// Global event emitter for token expiration
+let tokenExpiredCallback: (() => void) | null = null;
+
+export function setTokenExpiredCallback(callback: () => void) {
+  tokenExpiredCallback = callback;
+}
+
+function handleTokenExpired() {
+  clearSession();
+  if (tokenExpiredCallback) {
+    tokenExpiredCallback();
+  }
+}
 
 export interface ApiResponse<T = any> {
   success: boolean;
@@ -64,6 +78,16 @@ class ApiClient {
       requireAuth = true,
     } = options;
 
+    // Check if token is expired before making the request
+    if (requireAuth && isTokenExpired()) {
+      handleTokenExpired();
+      return {
+        success: false,
+        message: 'Session expired. Please log in again.',
+        statusCode: 401,
+      };
+    }
+
     // Prepare headers
     const requestHeaders: Record<string, string> = {
       ...this.baseHeaders,
@@ -92,48 +116,62 @@ class ApiClient {
     try {
       const response = await fetch(url, requestConfig);
       
-      // Handle different response types
-      let responseData: any;
-      const contentType = response.headers.get('content-type');
-      
-      if (contentType && contentType.includes('application/json')) {
-        responseData = await response.json();
-      } else {
-        responseData = await response.text();
-      }
-
-      // If response is OK, return the actual API response (don't wrap it)
-      if (response.ok) {
-        // If the API already returns a standardized format, pass it through
-        if (responseData && typeof responseData === 'object' && 'success' in responseData) {
-          return responseData;
-        }
-        // Otherwise, wrap it in our standard format
-        return {
-          success: true,
-          data: responseData,
-          statusCode: response.status,
-        };
-      } else {
-        // For errors, check if API already returns standardized error format
-        if (responseData && typeof responseData === 'object' && 'success' in responseData) {
-          // API already returns standardized format, pass it through
-          return responseData;
-        }
-        // Otherwise, create standardized error format
-        const errorMessage = responseData?.message || responseData?.error || `HTTP ${response.status}: ${response.statusText}`;
+      // Handle 401 Unauthorized - token expired
+      if (response.status === 401 && requireAuth) {
+        handleTokenExpired();
         return {
           success: false,
-          message: errorMessage,
-          statusCode: response.status,
-          data: responseData,
+          message: 'Session expired. Please log in again.',
+          statusCode: 401,
         };
       }
+      
+      return this.handleResponse<T>(response);
     } catch (error) {
       console.error('API request failed:', error);
       return {
         success: false,
         message: error instanceof Error ? error.message : 'Network error occurred',
+      };
+    }
+  }
+
+  private async handleResponse<T>(response: Response): Promise<ApiResponse<T>> {
+    // Handle different response types
+    let responseData: any;
+    const contentType = response.headers.get('content-type');
+    
+    if (contentType && contentType.includes('application/json')) {
+      responseData = await response.json();
+    } else {
+      responseData = await response.text();
+    }
+
+    // If response is OK, return the actual API response (don't wrap it)
+    if (response.ok) {
+      // If the API already returns a standardized format, pass it through
+      if (responseData && typeof responseData === 'object' && 'success' in responseData) {
+        return responseData;
+      }
+      // Otherwise, wrap it in our standard format
+      return {
+        success: true,
+        data: responseData,
+        statusCode: response.status,
+      };
+    } else {
+      // For errors, check if API already returns standardized error format
+      if (responseData && typeof responseData === 'object' && 'success' in responseData) {
+        // API already returns standardized format, pass it through
+        return responseData;
+      }
+      // Otherwise, create standardized error format
+      const errorMessage = responseData?.message || responseData?.error || `HTTP ${response.status}: ${response.statusText}`;
+      return {
+        success: false,
+        message: errorMessage,
+        statusCode: response.status,
+        data: responseData,
       };
     }
   }
