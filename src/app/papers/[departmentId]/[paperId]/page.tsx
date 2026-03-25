@@ -76,7 +76,7 @@ export default function PaperDetailsPage() {
       
       if (result.data) {
         // The API response structure is: { success: true, data: { _id, paperId, questions, ... } }
-        const paper = result.data // The paper data is directly in result.data
+        const paper = result.data.paperDetails
         let questions = result.data.questions || []
         
         // Fetch answers and merge with questions
@@ -87,11 +87,7 @@ export default function PaperDetailsPage() {
         
         // Check if answers exist in the response
         let answersMap = new Map()
-        if (answersResult.data?.data?.answers) {
-          answersMap = new Map(
-            answersResult.data.data.answers.map((ans: { id: number; correct: number }) => [ans.id, ans.correct])
-          )
-        } else if (answersResult.data?.answers) {
+        if (answersResult.data?.answers) {
           answersMap = new Map(
             answersResult.data.answers.map((ans: { id: number; correct: number }) => [ans.id, ans.correct])
           )
