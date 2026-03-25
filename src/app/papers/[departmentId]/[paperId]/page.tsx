@@ -8,7 +8,7 @@ import { PaperJsonEditor } from '@/components/PaperJsonEditor'
 import { PaperDetailsForm } from '@/components/PaperDetailsForm'
 import { ToastContainer, useToast } from '@/components/Toast'
 import { API_ENDPOINTS } from '@/lib/api'
-import { apiClient } from '@/lib/api-client'
+import { apiClient, getErrorMessage } from '@/lib/api-client'
 import { getSession } from '@/lib/auth'
 
 interface PaperData {
@@ -60,6 +60,9 @@ export default function PaperDetailsPage() {
   useEffect(() => {
     if (departmentId && paperId) {
       fetchPaperDetails()
+    } else {
+      setError(`Invalid parameters: departmentId=${departmentId}, paperId=${paperId}`)
+      setLoading(false)
     }
   }, [departmentId, paperId])
 
@@ -69,25 +72,30 @@ export default function PaperDetailsPage() {
     try {
       const result = await apiClient.get(API_ENDPOINTS.paperDetail(departmentId, paperId))
       
-      if (!result.success) throw new Error('Failed to fetch paper details')
+      if (!result.success) throw new Error(getErrorMessage(result))
       
-      if (result.data?.data) {
-        const paper = result.data.data.paperDetails
-        let questions = result.data.data.questions || []
+      if (result.data) {
+        // The API response structure is: { success: true, data: { _id, paperId, questions, ... } }
+        const paper = result.data // The paper data is directly in result.data
+        let questions = result.data.questions || []
         
         // Fetch answers and merge with questions
         const answersResult = await apiClient.get(API_ENDPOINTS.paperAnswers(departmentId, paperId))
         if (!answersResult.success) {
-          throw new Error('Failed to fetch answers')
+          throw new Error(getErrorMessage(answersResult))
         }
         
-        if (!answersResult.data?.data?.answers) {
-          throw new Error('Invalid answers response format')
+        // Check if answers exist in the response
+        let answersMap = new Map()
+        if (answersResult.data?.data?.answers) {
+          answersMap = new Map(
+            answersResult.data.data.answers.map((ans: { id: number; correct: number }) => [ans.id, ans.correct])
+          )
+        } else if (answersResult.data?.answers) {
+          answersMap = new Map(
+            answersResult.data.answers.map((ans: { id: number; correct: number }) => [ans.id, ans.correct])
+          )
         }
-        
-        const answersMap = new Map(
-          answersResult.data.data.answers.map((ans: { id: number; correct: number }) => [ans.id, ans.correct])
-        )
         
         // Map answers to questions
         questions = questions.map((q: any) => ({
@@ -158,7 +166,7 @@ export default function PaperDetailsPage() {
       const result = await apiClient.patch(API_ENDPOINTS.updatePaper(paperId), payload)
 
       if (!result.success) {
-        throw new Error(result.message || 'API error occurred')
+        throw new Error(getErrorMessage(result))
       }
 
       toast.success('Paper updated successfully!')

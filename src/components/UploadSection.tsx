@@ -8,7 +8,7 @@ import { PaperDetailsForm } from './PaperDetailsForm'
 import { ToastContainer, useToast } from './Toast'
 import { API_ENDPOINTS } from '@/lib/api'
 import { getSession } from '@/lib/auth'
-import { apiClient } from '@/lib/api-client'
+import { apiClient, getErrorMessage } from '@/lib/api-client'
 
 interface PaperData {
   paperType: 'sectional' | 'full' | 'general' | ''
@@ -137,7 +137,7 @@ export function UploadSection() {
       const result = await apiClient.post(API_ENDPOINTS.createPaper, payload)
 
       if (!result.success) {
-        throw new Error(result.message || 'API error occurred')
+        throw new Error(getErrorMessage(result))
       }
 
       toast.success('Paper created successfully!')

@@ -6,7 +6,7 @@ import { PageHeader } from './PageHeader'
 import { ToastContainer, useToast } from './Toast'
 import { useRouter } from 'next/navigation'
 import { API_ENDPOINTS } from '@/lib/api'
-import { apiClient } from '@/lib/api-client'
+import { apiClient, getErrorMessage } from '@/lib/api-client'
 import { getSession } from '@/lib/auth'
 
 interface Department {
@@ -80,7 +80,7 @@ export function PapersSection() {
     setError(null)
     try {
       const result = await apiClient.get(API_ENDPOINTS.departments)
-      if (!result.success) throw new Error('Failed to fetch departments')
+      if (!result.success) throw new Error(getErrorMessage(result))
       
       // Handle different response formats
       let depts: Department[] = []
@@ -124,7 +124,7 @@ export function PapersSection() {
     setLoadingPapers(prev => new Set(prev).add(deptId))
     try {
       const result = await apiClient.get(API_ENDPOINTS.papers(deptId, page))
-      if (!result.success) throw new Error('Failed to fetch papers')
+      if (!result.success) throw new Error(getErrorMessage(result))
       
       // Extract papers from nested response structure
       let papers: Paper[] = []
@@ -164,7 +164,7 @@ export function PapersSection() {
     setLoadingPapers(prev => new Set(prev).add(deptId))
     try {
       const result = await apiClient.get(API_ENDPOINTS.generalPapers(page))
-      if (!result.success) throw new Error('Failed to fetch general papers')
+      if (!result.success) throw new Error(getErrorMessage(result))
       
       // Extract papers from nested response structure
       let papers: Paper[] = []
@@ -236,7 +236,7 @@ export function PapersSection() {
       }
       
       const result = await apiClient.delete(API_ENDPOINTS.deletePaper(paperId), { username: user.username })
-      if (!result.success) throw new Error('Failed to delete paper')
+      if (!result.success) throw new Error(getErrorMessage(result))
       
       // Remove from local state using paperId
       setPapersByDept(prev => ({
@@ -255,7 +255,7 @@ export function PapersSection() {
     setTogglingPaper(paperId)
     try {
       const result = await apiClient.patch(API_ENDPOINTS.togglePaper(paperId), { isActive: !currentStatus })
-      if (!result.success) throw new Error('Failed to toggle paper status')
+      if (!result.success) throw new Error(getErrorMessage(result))
       
       // Update local state using paperId
       setPapersByDept(prev => ({

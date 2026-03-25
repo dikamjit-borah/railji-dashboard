@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { API_ENDPOINTS } from '@/lib/api'
-import { apiClient } from '@/lib/api-client'
+import { apiClient, getErrorMessage } from '@/lib/api-client'
 
 interface PaperData {
   paperType: 'sectional' | 'full' | 'general' | ''
@@ -100,7 +100,7 @@ export function PaperDetailsForm({
       if (result.success && result.data) {
         setDepartments(result.data)
       } else {
-        throw new Error('Invalid response format')
+        throw new Error(getErrorMessage(result))
       }
     } catch (error) {
       console.error('Failed to fetch departments:', error)
@@ -119,7 +119,7 @@ export function PaperDetailsForm({
         const codes = result.data.metadata.paperCodes.nonGeneral
         setPaperCodes(codes)
       } else {
-        console.error('Failed to fetch paper codes:', result)
+        console.error('Failed to fetch paper codes:', getErrorMessage(result))
         setPaperCodes([])
       }
     } catch (error) {
@@ -139,7 +139,7 @@ export function PaperDetailsForm({
         const codes = result.data.metadata.paperCodes.general
         setPaperCodes(codes)
       } else {
-        console.error('Failed to fetch general paper codes:', result)
+        console.error('Failed to fetch general paper codes:', getErrorMessage(result))
         setPaperCodes([])
       }
     } catch (error) {

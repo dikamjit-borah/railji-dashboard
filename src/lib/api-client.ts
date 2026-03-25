@@ -5,6 +5,9 @@ export interface ApiResponse<T = any> {
   data?: T;
   message?: string;
   statusCode?: number;
+  error?: string;
+  timestamp?: string;
+  path?: string;
 }
 
 export interface ApiRequestOptions {
@@ -12,6 +15,16 @@ export interface ApiRequestOptions {
   body?: any;
   headers?: Record<string, string>;
   requireAuth?: boolean;
+}
+
+/**
+ * Extract the most appropriate error message from an API response
+ */
+export function getErrorMessage(result: ApiResponse): string {
+  if (result.message) return result.message;
+  if (result.error) return result.error;
+  if (result.statusCode) return `HTTP ${result.statusCode} Error`;
+  return 'An unknown error occurred';
 }
 
 /**
@@ -102,7 +115,12 @@ class ApiClient {
           statusCode: response.status,
         };
       } else {
-        // For errors, try to extract message from API response or use default
+        // For errors, check if API already returns standardized error format
+        if (responseData && typeof responseData === 'object' && 'success' in responseData) {
+          // API already returns standardized format, pass it through
+          return responseData;
+        }
+        // Otherwise, create standardized error format
         const errorMessage = responseData?.message || responseData?.error || `HTTP ${response.status}: ${response.statusText}`;
         return {
           success: false,
