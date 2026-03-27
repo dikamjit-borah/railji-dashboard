@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { User, ToggleLeft, ToggleRight, Settings, RefreshCw } from 'lucide-react'
+import { User, ToggleLeft, ToggleRight, Settings, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react'
 import { PageHeader } from './PageHeader'
 import { ToastContainer, useToast } from './Toast'
 import { UsersAPI, User as UserType } from '@/lib/users-api'
@@ -12,17 +12,23 @@ export function UsersSection() {
   const [users, setUsers] = useState<UserType[]>([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [total, setTotal] = useState(0)
+  const [limit] = useState(10)
   const toast = useToast()
 
   useEffect(() => {
     fetchUsers()
-  }, [])
+  }, [currentPage])
 
   const fetchUsers = async () => {
     try {
-      const data = await UsersAPI.getUsers()
+      const data = await UsersAPI.getUsers(currentPage, limit)
       if (data.success) {
         setUsers(data.data.users)
+        setTotalPages(data.data.totalPages)
+        setTotal(data.data.total)
       } else {
         toast.error('Failed to fetch users')
       }
@@ -38,6 +44,13 @@ export function UsersSection() {
   const handleRefresh = async () => {
     setRefreshing(true)
     await fetchUsers()
+  }
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setCurrentPage(newPage)
+      setLoading(true)
+    }
   }
 
   const toggleUserStatus = async (userId: string, username: string) => {
@@ -91,7 +104,7 @@ export function UsersSection() {
     <div className="bg-slate-50 min-h-screen">
       <PageHeader
         title="Users"
-        subtitle={`Manage platform users (${activeCount} active)`}
+        subtitle={`Manage platform users (${total} total, ${activeCount} active)`}
         action={{
           label: refreshing ? 'Refreshing...' : 'Refresh',
           onClick: handleRefresh,
@@ -101,12 +114,13 @@ export function UsersSection() {
       />
 
       <div className="px-4 md:px-8 py-8 md:py-12">
-        <div className="space-y-0 border border-slate-200 bg-white overflow-hidden rounded-lg">
+        <div className="space-y-0 border border-slate-200 bg-white overflow-hidden rounded-lg overflow-x-auto">
           {/* Table Header */}
-          <div className="grid grid-cols-6 gap-6 px-6 py-4 bg-slate-50 border-b border-slate-100 text-xs font-semibold text-slate-600 uppercase tracking-widest">
+          <div className="grid gap-4 px-6 py-4 bg-slate-50 border-b border-slate-100 text-xs font-semibold text-slate-600 uppercase tracking-widest" style={{ gridTemplateColumns: '180px 220px 200px 300px 110px 100px 100px', minWidth: '1210px' }}>
             <div>User</div>
             <div>Email</div>
             <div>User ID</div>
+            <div>Supabase ID</div>
             <div>Joined</div>
             <div>Status</div>
             <div className="text-right">Actions</div>
@@ -116,9 +130,10 @@ export function UsersSection() {
           {users.map((user, index) => (
             <div
               key={user._id}
-              className={`grid grid-cols-6 gap-6 px-6 py-4 items-center hover:bg-slate-50 transition-colors ${
+              className={`grid gap-4 px-6 py-4 items-center hover:bg-slate-50 transition-colors ${
                 index !== users.length - 1 ? 'border-b border-slate-100' : ''
               }`}
+              style={{ gridTemplateColumns: '180px 220px 200px 300px 110px 100px 100px', minWidth: '1210px' }}
             >
               {/* User */}
               <div className="min-w-0">
@@ -142,6 +157,13 @@ export function UsersSection() {
               {/* User ID */}
               <div className="min-w-0">
                 <p className="text-sm text-slate-600 font-mono truncate">{user.userId}</p>
+              </div>
+
+              {/* Supabase ID */}
+              <div className="min-w-0">
+                <p className="text-sm text-slate-600 font-mono truncate">
+                  {user.supabaseId || '-'}
+                </p>
               </div>
 
               {/* Joined */}
@@ -188,6 +210,72 @@ export function UsersSection() {
             <User className="w-12 h-12 text-slate-400 mx-auto mb-4" />
             <p className="text-slate-600 mb-4">No users found</p>
             <p className="text-sm text-slate-500">Users will appear here once they register on the platform</p>
+          </div>
+        )}
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="mt-6 flex items-center justify-between">
+            <div className="text-sm text-slate-600">
+              Showing {((currentPage - 1) * limit) + 1} to {Math.min(currentPage * limit, total)} of {total} users
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="px-3 py-2 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                Previous
+              </button>
+              
+              <div className="flex items-center gap-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                  // Show first page, last page, current page, and pages around current
+                  const showPage = 
+                    page === 1 || 
+                    page === totalPages || 
+                    (page >= currentPage - 1 && page <= currentPage + 1)
+                  
+                  const showEllipsis = 
+                    (page === currentPage - 2 && currentPage > 3) ||
+                    (page === currentPage + 2 && currentPage < totalPages - 2)
+
+                  if (showEllipsis) {
+                    return (
+                      <span key={page} className="px-2 text-slate-400">
+                        ...
+                      </span>
+                    )
+                  }
+
+                  if (!showPage) return null
+
+                  return (
+                    <button
+                      key={page}
+                      onClick={() => handlePageChange(page)}
+                      className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        currentPage === page
+                          ? 'bg-slate-900 text-white'
+                          : 'text-slate-700 hover:bg-slate-100'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  )
+                })}
+              </div>
+
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="px-3 py-2 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1"
+              >
+                Next
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         )}
       </div>

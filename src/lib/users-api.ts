@@ -5,6 +5,7 @@ export interface User {
   _id: string
   username: string
   userId: string
+  supabaseId?: string
   email: string
   createdAt: string
   updatedAt: string
@@ -63,13 +64,30 @@ interface GrantAccessPayload {
   paymentGateway?: string
 }
 
+export interface PaginatedUsersResponse {
+  users: User[]
+  page: number
+  limit: number
+  total: number
+  totalPages: number
+}
+
 export class UsersAPI {
-  static async getUsers(): Promise<{ success: boolean; data: { users: User[] } }> {
-    const result = await apiClient.get(API_ENDPOINTS.users);
+  static async getUsers(page: number = 1, limit: number = 10): Promise<{ success: boolean; data: PaginatedUsersResponse }> {
+    const result = await apiClient.get(`${API_ENDPOINTS.users}?page=${page}&limit=${limit}`);
     if (!result.success) {
-      return { success: false, data: { users: [] } };
+      return { 
+        success: false, 
+        data: { 
+          users: [], 
+          page: 1, 
+          limit: 10, 
+          total: 0, 
+          totalPages: 0 
+        } 
+      };
     }
-    return result as { success: boolean; data: { users: User[] } };
+    return result as { success: boolean; data: PaginatedUsersResponse };
   }
 
   static async getUserById(userId: string): Promise<{ success: boolean; data: { user: User } }> {
