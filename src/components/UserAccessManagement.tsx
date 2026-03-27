@@ -138,6 +138,7 @@ export function UserAccessManagement({ userId }: UserAccessManagementProps) {
         <DepartmentPapersList
           mode="access"
           userId={userId}
+          supabaseId={user.supabaseId}
           onToggleDepartmentAccess={handleToggleDepartmentAccess}
           onTogglePaperAccess={handleTogglePaperAccess}
         />

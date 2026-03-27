@@ -38,6 +38,7 @@ interface PaginationInfo {
 interface DepartmentPapersListProps {
   mode: 'manage' | 'access'
   userId?: string
+  supabaseId?: string
   userDepartments?: string[]
   userPapers?: string[]
   onToggleDepartmentAccess?: (deptId: string, deptName: string) => Promise<void>
@@ -49,7 +50,7 @@ interface DepartmentPapersListProps {
 
 export function DepartmentPapersList({
   mode,
-  userId,
+  supabaseId,
   userDepartments = [],
   userPapers = [],
   onToggleDepartmentAccess,
@@ -81,8 +82,9 @@ export function DepartmentPapersList({
     setLoadingDepts(true)
     setError(null)
     try {
-      const url = mode === 'access' && userId 
-        ? `${API_ENDPOINTS.departments}?userId=${userId}`
+      // Use different endpoint based on mode
+      const url = mode === 'access' && supabaseId
+        ? API_ENDPOINTS.userDepartments(supabaseId)
         : API_ENDPOINTS.departments
       
       const result = await apiClient.get(url)
@@ -119,9 +121,12 @@ export function DepartmentPapersList({
   const fetchPapersForDept = async (deptId: string, page: number = 1) => {
     setLoadingPapers(prev => new Set(prev).add(deptId))
     try {
-      let url = API_ENDPOINTS.papers(deptId, page)
-      if (mode === 'access' && userId) {
-        url = url;
+      // Use different endpoint based on mode
+      let url: string
+      if (mode === 'access' && supabaseId) {
+        url = API_ENDPOINTS.userPapers(supabaseId, deptId, page)
+      } else {
+        url = API_ENDPOINTS.papers(deptId, page)
       }
       
       const result = await apiClient.get(url)
@@ -156,9 +161,12 @@ export function DepartmentPapersList({
     const deptId = 'GENERAL'
     setLoadingPapers(prev => new Set(prev).add(deptId))
     try {
-      let url = API_ENDPOINTS.generalPapers(page)
-      if (mode === 'access' && userId) {
-        url = url
+      // Use different endpoint based on mode
+      let url: string
+      if (mode === 'access' && supabaseId) {
+        url = API_ENDPOINTS.userGeneralPapers(supabaseId, page)
+      } else {
+        url = API_ENDPOINTS.generalPapers(page)
       }
       
       const result = await apiClient.get(url)
