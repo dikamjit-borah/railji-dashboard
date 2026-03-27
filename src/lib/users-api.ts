@@ -55,15 +55,6 @@ export interface UserAccessUpdate {
   action: 'add' | 'remove'
 }
 
-interface GrantAccessPayload {
-  userId: string
-  departmentId?: string
-  paperId?: string
-  description?: string
-  paymentRef?: string
-  paymentGateway?: string
-}
-
 export interface PaginatedUsersResponse {
   users: User[]
   page: number
@@ -125,19 +116,8 @@ export class UsersAPI {
 
   static async updateUserAccess(userId: string, update: UserAccessUpdate): Promise<{ success: boolean; message?: string }> {
     try {
-      // Only handle 'add' action for now (grant-access API)
-      // revoke-access API will be integrated later
-      if (update.action === 'remove') {
-        console.warn('Revoke access API not yet integrated');
-        return { 
-          success: false, 
-          message: 'Revoke access will be available soon' 
-        };
-      }
-
-      const payload: GrantAccessPayload = {
-        userId: userId,
-        description: `Grant ${update.type} access`
+      const payload: any = {
+        userId: userId
       };
 
       // Add departmentId or paperId based on type
@@ -147,17 +127,25 @@ export class UsersAPI {
         payload.paperId = update.resourceId;
       }
 
-      const result = await apiClient.post(API_ENDPOINTS.grantAccess, payload);
+      // Use appropriate endpoint and method based on action
+      let result;
+      if (update.action === 'add') {
+        result = await apiClient.post(API_ENDPOINTS.grantAccess, payload);
+      } else {
+        result = await apiClient.patch(API_ENDPOINTS.revokeAccess, payload);
+      }
       
       return { 
         success: result.success,
-        message: result.message || (result.success ? 'Access granted successfully' : 'Failed to grant access')
+        message: result.message || (result.success 
+          ? `Access ${update.action === 'add' ? 'granted' : 'revoked'} successfully` 
+          : `Failed to ${update.action === 'add' ? 'grant' : 'revoke'} access`)
       };
     } catch (error) {
-      console.error('Error granting user access:', error);
+      console.error(`Error ${update.action === 'add' ? 'granting' : 'revoking'} user access:`, error);
       return { 
         success: false,
-        message: error instanceof Error ? error.message : 'Error granting user access'
+        message: error instanceof Error ? error.message : `Error ${update.action === 'add' ? 'granting' : 'revoking'} user access`
       };
     }
   }
@@ -208,7 +196,7 @@ export class UsersAPI {
     }
   }
 
-  static async getPapersForDepartment(departmentId: string, userId?: string): Promise<{ success: boolean; data: { papers: Paper[] } }> {
+  static async getPapersForDepartment(departmentId: string): Promise<{ success: boolean; data: { papers: Paper[] } }> {
     try {
       let baseUrl;
       

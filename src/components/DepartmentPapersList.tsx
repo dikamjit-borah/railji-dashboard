@@ -14,6 +14,7 @@ interface Department {
 }
 
 interface Paper {
+  isFree: boolean
   _id: string
   paperId: string
   paperCode: string | null
@@ -41,8 +42,8 @@ interface DepartmentPapersListProps {
   supabaseId?: string
   userDepartments?: string[]
   userPapers?: string[]
-  onToggleDepartmentAccess?: (deptId: string, deptName: string) => Promise<void>
-  onTogglePaperAccess?: (paperId: string, paperTitle: string) => Promise<void>
+  onToggleDepartmentAccess?: (deptId: string, deptName: string, hasAccess: boolean) => Promise<void>
+  onTogglePaperAccess?: (paperId: string, paperTitle: string, hasAccess: boolean) => Promise<void>
   onDeletePaper?: (paperId: string, deptId: string) => Promise<void>
   onTogglePaperStatus?: (paperId: string, deptId: string, currentStatus: boolean) => Promise<void>
   onViewPaper?: (paperId: string, departmentId: string) => void
@@ -214,18 +215,18 @@ export function DepartmentPapersList({
     setExpandedDepts(newExpanded)
   }
 
-  const handleToggleDepartment = async (deptId: string, deptName: string) => {
+  const handleToggleDepartment = async (deptId: string, deptName: string, hasAccess: boolean) => {
     if (mode === 'access' && onToggleDepartmentAccess) {
       setTogglingItem(`dept-${deptId}`)
-      await onToggleDepartmentAccess(deptId, deptName)
+      await onToggleDepartmentAccess(deptId, deptName, hasAccess)
       setTogglingItem(null)
     }
   }
 
-  const handleTogglePaper = async (paperId: string, paperTitle: string, deptId: string, currentStatus?: boolean) => {
+  const handleTogglePaper = async (paperId: string, paperTitle: string, deptId: string, hasAccess: boolean, currentStatus?: boolean) => {
     if (mode === 'access' && onTogglePaperAccess) {
       setTogglingItem(`paper-${paperId}`)
-      await onTogglePaperAccess(paperId, paperTitle)
+      await onTogglePaperAccess(paperId, paperTitle, hasAccess)
       setTogglingItem(null)
     } else if (mode === 'manage' && onTogglePaperStatus) {
       setTogglingItem(`paper-${paperId}`)
@@ -290,15 +291,18 @@ export function DepartmentPapersList({
           const isLoadingPapers = loadingPapers.has(dept.departmentId)
           const pagination = paginationByDept[dept.departmentId]
           const currentPage = currentPageByDept[dept.departmentId] || 1
-          const hasAccess = mode === 'access' && userDepartments.includes(dept.departmentId)
+          const hasAccess = mode === 'access' && (dept.hasAccess || userDepartments.includes(dept.departmentId))
+          const hasDepartmentAccess = hasAccess // Store for paper-level checks
 
           return (
             <div key={dept.departmentId} className="bg-white border border-slate-200 overflow-hidden">
-              <button
-                onClick={() => toggleDepartment(dept.departmentId)}
+              <div
                 className="w-full px-6 py-4 flex items-center justify-between bg-slate-50 hover:bg-slate-100 transition-colors"
               >
-                <div className="flex items-center gap-3">
+                <button
+                  onClick={() => toggleDepartment(dept.departmentId)}
+                  className="flex items-center gap-3 flex-1 text-left"
+                >
                   {isExpanded ? (
                     <ChevronDown className="w-5 h-5 text-slate-600" />
                   ) : (
@@ -310,7 +314,7 @@ export function DepartmentPapersList({
                       <p className="text-sm text-slate-600 mt-0.5">{dept.description}</p>
                     )}
                   </div>
-                </div>
+                </button>
                 <div className="flex items-center gap-3">
                   <span className="text-xs text-slate-500 bg-slate-200 px-2 py-1 rounded">
                     {isLoadingPapers ? (
@@ -325,7 +329,7 @@ export function DepartmentPapersList({
                     <button
                       onClick={(e) => {
                         e.stopPropagation()
-                        handleToggleDepartment(dept.departmentId, dept.name)
+                        handleToggleDepartment(dept.departmentId, dept.name, hasAccess)
                       }}
                       disabled={togglingItem === `dept-${dept.departmentId}`}
                       className={`transition-colors p-1.5 disabled:opacity-50 ${
@@ -345,7 +349,7 @@ export function DepartmentPapersList({
                     </button>
                   )}
                 </div>
-              </button>
+              </div>
 
               {isExpanded && (
                 <div className="border-t border-slate-200">
@@ -361,7 +365,8 @@ export function DepartmentPapersList({
                     <>
                       <div className="divide-y divide-slate-100">
                       {papers.map((paper) => {
-                        const hasPaperAccess = mode === 'access' && userPapers.includes(paper.paperId)
+                        const hasPaperAccess = mode === 'access' && (paper.hasAccess || userPapers.includes(paper.paperId))
+                        const isPaperToggleDisabled = mode === 'access' && (hasDepartmentAccess || paper.isFree) // Disable if department has access or paper is free
                         
                         return (
                           <div
@@ -404,7 +409,7 @@ export function DepartmentPapersList({
                                   )}
                                   {onTogglePaperStatus && (
                                     <button
-                                      onClick={() => handleTogglePaper(paper.paperId, paper.name, dept.departmentId, paper.isActive)}
+                                      onClick={() => handleTogglePaper(paper.paperId, paper.name, dept.departmentId, false, paper.isActive)}
                                       disabled={togglingItem === `paper-${paper.paperId}`}
                                       className={`transition-colors p-1.5 disabled:opacity-50 ${
                                         paper.isActive !== false 
@@ -435,18 +440,28 @@ export function DepartmentPapersList({
                               )}
                               {mode === 'access' && onTogglePaperAccess && (
                                 <button
-                                  onClick={() => handleTogglePaper(paper.paperId, paper.name, dept.departmentId)}
-                                  disabled={togglingItem === `paper-${paper.paperId}`}
+                                  onClick={() => !isPaperToggleDisabled && handleTogglePaper(paper.paperId, paper.name, dept.departmentId, hasPaperAccess)}
+                                  disabled={togglingItem === `paper-${paper.paperId}` || isPaperToggleDisabled}
                                   className={`transition-colors p-1.5 disabled:opacity-50 ${
-                                    hasPaperAccess 
-                                      ? 'text-green-600 hover:text-green-700' 
-                                      : 'text-slate-400 hover:text-slate-600'
+                                    isPaperToggleDisabled
+                                      ? 'text-slate-300 cursor-not-allowed'
+                                      : hasPaperAccess 
+                                        ? 'text-green-600 hover:text-green-700' 
+                                        : 'text-slate-400 hover:text-slate-600'
                                   }`}
-                                  title={hasPaperAccess ? 'Remove paper access' : 'Grant paper access'}
+                                  title={
+                                    paper.isFree
+                                      ? 'Free papers are accessible to all users'
+                                      : hasDepartmentAccess
+                                        ? 'Cannot modify paper access when department access is granted' 
+                                        : hasPaperAccess 
+                                          ? 'Remove paper access' 
+                                          : 'Grant paper access'
+                                  }
                                 >
                                   {togglingItem === `paper-${paper.paperId}` ? (
                                     <Loader2 className="w-4 h-4 animate-spin" />
-                                  ) : hasPaperAccess ? (
+                                  ) : hasPaperAccess || isPaperToggleDisabled ? (
                                     <ToggleRight className="w-5 h-5" />
                                   ) : (
                                     <ToggleLeft className="w-5 h-5" />

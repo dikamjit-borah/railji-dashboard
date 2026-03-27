@@ -33,7 +33,7 @@ export function PageHeader({ title, subtitle, action }: PageHeaderProps) {
               {title}
             </h1>
             {subtitle && (
-              <p className="mt-1 text-sm text-slate-600">{subtitle}</p>
+              <div className="mt-1 text-sm text-slate-600">{subtitle}</div>
             )}
           </div>
         </div>

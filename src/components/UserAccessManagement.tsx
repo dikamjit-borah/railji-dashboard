@@ -18,6 +18,7 @@ export function UserAccessManagement({ userId }: UserAccessManagementProps) {
   
   const [user, setUser] = useState<UserType | null>(null)
   const [loading, setLoading] = useState(true)
+  const [refreshKey, setRefreshKey] = useState(0) // Add refresh key to force re-render
 
   useEffect(() => {
     fetchUserData()
@@ -41,16 +42,21 @@ export function UserAccessManagement({ userId }: UserAccessManagementProps) {
     }
   }
 
-  const handleToggleDepartmentAccess = async (deptId: string, deptName: string) => {
+  const handleToggleDepartmentAccess = async (deptId: string, deptName: string, hasAccess: boolean) => {
+    if (!user?.userId) return
+    
     try {
-      const data = await UsersAPI.updateUserAccess(userId, {
+      const data = await UsersAPI.updateUserAccess(user.userId, {
         type: 'department',
         resourceId: deptId,
-        action: 'add' // hasAccess will determine if it's add or remove
+        action: hasAccess ? 'remove' : 'add'
       })
 
       if (data.success) {
         toast.success(data.message || `Access updated for ${deptName}`)
+        // Refresh to get updated access state
+        await fetchUserData()
+        setRefreshKey(prev => prev + 1) // Force DepartmentPapersList to re-fetch
       } else {
         toast.error(data.message || 'Failed to update department access')
       }
@@ -60,16 +66,21 @@ export function UserAccessManagement({ userId }: UserAccessManagementProps) {
     }
   }
 
-  const handleTogglePaperAccess = async (paperId: string, paperTitle: string) => {
+  const handleTogglePaperAccess = async (paperId: string, paperTitle: string, hasAccess: boolean) => {
+    if (!user?.userId) return
+    
     try {
-      const data = await UsersAPI.updateUserAccess(userId, {
+      const data = await UsersAPI.updateUserAccess(user.userId, {
         type: 'paper',
         resourceId: paperId,
-        action: 'add' // hasAccess will determine if it's add or remove
+        action: hasAccess ? 'remove' : 'add'
       })
 
       if (data.success) {
         toast.success(data.message || `Access updated for "${paperTitle}"`)
+        // Refresh to get updated access state
+        await fetchUserData()
+        setRefreshKey(prev => prev + 1) // Force DepartmentPapersList to re-fetch
       } else {
         toast.error(data.message || 'Failed to update paper access')
       }
@@ -136,6 +147,7 @@ export function UserAccessManagement({ userId }: UserAccessManagementProps) {
 
       <div className="px-4 md:px-8 py-8 md:py-12">
         <DepartmentPapersList
+          key={refreshKey}
           mode="access"
           userId={userId}
           supabaseId={user.supabaseId}
