@@ -92,13 +92,7 @@ export class UsersAPI {
 
   static async getUserById(userId: string): Promise<{ success: boolean; data: { user: User } }> {
     try {
-      // Try to get individual user first
-      const result = await apiClient.get(`${API_ENDPOINTS.users}/${userId}`);
-      if (result.success) {
-        return result as { success: boolean; data: { user: User } };
-      }
-      
-      // Fallback: get all users and find the specific one
+      // Get all users and find the specific one
       const allUsersResult = await apiClient.get(API_ENDPOINTS.users);
       
       if (allUsersResult.success && allUsersResult.data?.users) {
@@ -127,54 +121,6 @@ export class UsersAPI {
   static async toggleUserStatus(userId: string): Promise<{ success: boolean }> {
     const result = await apiClient.patch(API_ENDPOINTS.toggleUserStatus(userId));
     return { success: result.success };
-  }
-
-  static async getUserDepartments(userId: string): Promise<{ success: boolean; data: { departments: string[] } }> {
-    try {
-      const result = await apiClient.get(API_ENDPOINTS.userDepartments(userId));
-      if (result.success && result.data) {
-        return {
-          success: true,
-          data: {
-            departments: result.data.departments || []
-          }
-        };
-      }
-      return {
-        success: false,
-        data: { departments: [] }
-      };
-    } catch (error) {
-      console.error('Error fetching user departments:', error);
-      return {
-        success: false,
-        data: { departments: [] }
-      };
-    }
-  }
-
-  static async getUserPapers(userId: string): Promise<{ success: boolean; data: { papers: string[] } }> {
-    try {
-      const result = await apiClient.get(API_ENDPOINTS.userPapers(userId));
-      if (result.success && result.data) {
-        return {
-          success: true,
-          data: {
-            papers: result.data.papers || []
-          }
-        };
-      }
-      return {
-        success: false,
-        data: { papers: [] }
-      };
-    } catch (error) {
-      console.error('Error fetching user papers:', error);
-      return {
-        success: false,
-        data: { papers: [] }
-      };
-    }
   }
 
   static async updateUserAccess(userId: string, update: UserAccessUpdate): Promise<{ success: boolean; message?: string }> {

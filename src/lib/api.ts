@@ -12,12 +12,23 @@ export const API_ENDPOINTS = {
 
   // Departments
   departments: `${BUSINESS_API_BASE_URL}/departments`,
+  
+  // Departments with supabaseId (for user access management)
+  userDepartments: (supabaseId: string) =>
+    `${BUSINESS_API_BASE_URL}/departments/${supabaseId}/departments`,
 
   // Papers - Business API
   papers: (departmentId: string, page?: number) =>
     `${BUSINESS_API_BASE_URL}/papers/${departmentId}${page ? `?page=${page}` : ""}`,
   generalPapers: (page?: number) =>
-    `${BUSINESS_API_BASE_URL}/papers/GENERAL?paperType=general${page ? `&page=${page}` : ""}`,
+    `${BUSINESS_API_BASE_URL}/papers/general?paperType=general${page ? `&page=${page}` : ""}`,
+  
+  // Papers with supabaseId (for user access management)
+  userPapers: (supabaseId: string, departmentId: string, page?: number) =>
+    `${BUSINESS_API_BASE_URL}/papers/${supabaseId}/${departmentId}${page ? `?page=${page}` : ""}`,
+  userGeneralPapers: (supabaseId: string, page?: number) =>
+    `${BUSINESS_API_BASE_URL}/papers/${supabaseId}/general?paperType=general${page ? `&page=${page}` : ""}`,
+  
   papersByType: (departmentId: string, paperType: string) =>
     `${BUSINESS_API_BASE_URL}/papers/${departmentId}?paperType=${paperType}`,
   generalPapersByType: (paperType: string) =>
@@ -41,8 +52,6 @@ export const API_ENDPOINTS = {
   users: `${DASHBOARD_API_BASE_URL}/users`,
   toggleUserStatus: (userId: string) =>
     `${DASHBOARD_API_BASE_URL}/users/${userId}/toggle`,
-  userDepartments: (userId: string) =>
-    `${DASHBOARD_API_BASE_URL}/users/${userId}/departments`,
-  userPapers: (userId: string) =>
-    `${DASHBOARD_API_BASE_URL}/users/${userId}/papers`,
+  grantAccess: `${DASHBOARD_API_BASE_URL}/users/grant-access`,
+  revokeAccess: `${DASHBOARD_API_BASE_URL}/users/revoke-access`,
 };
