@@ -25,9 +25,9 @@ export const API_ENDPOINTS = {
   
   // Papers with supabaseId (for user access management)
   userPapers: (supabaseId: string, departmentId: string, page?: number) =>
-    `${BUSINESS_API_BASE_URL}/papers/${supabaseId}/${departmentId}${page ? `?page=${page}` : ""}`,
+    `${BUSINESS_API_BASE_URL}/papers/${departmentId}/user/${supabaseId}${page ? `?page=${page}` : ""}`,
   userGeneralPapers: (supabaseId: string, page?: number) =>
-    `${BUSINESS_API_BASE_URL}/papers/${supabaseId}/general?paperType=general${page ? `&page=${page}` : ""}`,
+    `${BUSINESS_API_BASE_URL}/papers/general/user/${supabaseId}?paperType=general${page ? `&page=${page}` : ""}`,
   
   papersByType: (departmentId: string, paperType: string) =>
     `${BUSINESS_API_BASE_URL}/papers/${departmentId}?paperType=${paperType}`,
