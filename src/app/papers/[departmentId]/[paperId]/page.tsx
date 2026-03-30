@@ -14,6 +14,7 @@ import { getSession } from '@/lib/auth'
 interface PaperData {
   paperType: 'sectional' | 'full' | 'general' | ''
   department: string
+  designation: string
   paperCode: string
   year: string
   shift: 'morning' | 'afternoon' | 'evening' | 'night' | ''
@@ -42,6 +43,7 @@ export default function PaperDetailsPage() {
   const [currentPaper, setCurrentPaper] = useState<PaperData>({
     paperType: '',
     department: '',
+    designation: '',
     paperCode: '',
     year: '',
     shift: '',
@@ -103,6 +105,7 @@ export default function PaperDetailsPage() {
         setCurrentPaper({
           paperType: (paper.paperType as any) || '',
           department: paper.departmentId || '',
+          designation: paper.designation || '',
           paperCode: paper.paperCode || '',
           year: paper.year ? String(paper.year) : '',
           shift: (paper.shift?.toLowerCase() as any) || '',
@@ -141,6 +144,7 @@ export default function PaperDetailsPage() {
 
       const payload = {
         departmentId: currentPaper.department || undefined,
+        designation: currentPaper.paperType === 'general' ? undefined : (currentPaper.designation || undefined),
         paperCode: currentPaper.paperType === 'full' ? undefined : (currentPaper.paperCode || undefined),
         paperType: currentPaper.paperType,
         name: currentPaper.paperName,

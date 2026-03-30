@@ -1,10 +1,10 @@
 // Base URLs come from environment variables (for Next.js use NEXT_PUBLIC_*)
 const BUSINESS_API_BASE_URL =
   process.env.NEXT_PUBLIC_BUSINESS_API_BASE_URL ||
-  "https://railji-business-stage.onrender.com/business/v1";
+  "http://localhost:3001/business/v1";
 const DASHBOARD_API_BASE_URL =
   process.env.NEXT_PUBLIC_DASHBOARD_API_BASE_URL ||
-  "https://railji-dashboard-stage.onrender.com/dashboard/v1";
+  "http://localhost:3002/dashboard/v1";
 
 export const API_ENDPOINTS = {
   // Auth
@@ -13,9 +13,9 @@ export const API_ENDPOINTS = {
   // Departments
   departments: `${BUSINESS_API_BASE_URL}/departments`,
   
-  // Departments with supabaseId (for user access management)
-  userDepartments: (supabaseId: string) =>
-    `${BUSINESS_API_BASE_URL}/departments/${supabaseId}/departments`,
+  // Departments with userId (for user access management)
+  userDepartments: (userId: string) =>
+    `${BUSINESS_API_BASE_URL}/departments/user/${userId}`,
 
   // Papers - Business API
   papers: (departmentId: string, page?: number) =>
@@ -23,16 +23,18 @@ export const API_ENDPOINTS = {
   generalPapers: (page?: number) =>
     `${BUSINESS_API_BASE_URL}/papers/general?paperType=general${page ? `&page=${page}` : ""}`,
   
-  // Papers with supabaseId (for user access management)
-  userPapers: (supabaseId: string, departmentId: string, page?: number) =>
-    `${BUSINESS_API_BASE_URL}/papers/${departmentId}/user/${supabaseId}${page ? `?page=${page}` : ""}`,
-  userGeneralPapers: (supabaseId: string, page?: number) =>
-    `${BUSINESS_API_BASE_URL}/papers/general/user/${supabaseId}?paperType=general${page ? `&page=${page}` : ""}`,
+  // Papers with userId (for user access management)
+  userPapers: (userId: string, departmentId: string, page?: number) =>
+    `${BUSINESS_API_BASE_URL}/papers/${departmentId}/user/${userId}${page ? `?page=${page}` : ""}`,
+  userGeneralPapers: (userId: string, page?: number) =>
+    `${BUSINESS_API_BASE_URL}/papers/general/user/${userId}?paperType=general${page ? `&page=${page}` : ""}`,
   
-  papersByType: (departmentId: string, paperType: string) =>
-    `${BUSINESS_API_BASE_URL}/papers/${departmentId}?paperType=${paperType}`,
+  papersByType: (departmentId: string, paperType: string, designation?: string) =>
+    `${BUSINESS_API_BASE_URL}/papers/${departmentId}?paperType=${paperType}${designation ? `&designation=${encodeURIComponent(designation)}` : ''}`,
   generalPapersByType: (paperType: string) =>
     `${BUSINESS_API_BASE_URL}/papers/general?paperType=${paperType}`,
+  departmentDesignations: (departmentId: string) =>
+    `${BUSINESS_API_BASE_URL}/papers/${departmentId}?paperType=sectional`,
   paperDetail: (departmentId: string, paperId: string) =>
     `${BUSINESS_API_BASE_URL}/papers/${departmentId}/${paperId}`,
   togglePaper: (paperId: string) =>

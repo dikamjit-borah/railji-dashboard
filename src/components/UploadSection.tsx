@@ -13,6 +13,7 @@ import { apiClient, getErrorMessage } from '@/lib/api-client'
 interface PaperData {
   paperType: 'sectional' | 'full' | 'general' | ''
   department: string
+  designation: string
   paperCode: string
   year: string
   shift: 'morning' | 'afternoon' | 'evening' | 'night' | ''
@@ -35,6 +36,7 @@ export function UploadSection() {
   const [currentPaper, setCurrentPaper] = useState<PaperData>({
     paperType: '',
     department: '',
+    designation: '',
     paperCode: '',
     year: new Date().getFullYear().toString(),
     shift: 'morning',
@@ -116,6 +118,7 @@ export function UploadSection() {
 
       const payload = {
         departmentId: currentPaper.department || undefined,
+        designation: currentPaper.paperType === 'general' ? undefined : (currentPaper.designation || undefined),
         paperCode: currentPaper.paperType === 'full' ? undefined : (currentPaper.paperCode || undefined),
         paperType: currentPaper.paperType,
         name: currentPaper.paperName,
