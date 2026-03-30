@@ -29,7 +29,6 @@ interface Department {
   departmentId: string
   slug: string
   name: string
-  fullName: string
   description: string
   icon: string
   img: string
@@ -244,7 +243,7 @@ export function PaperDetailsForm({
             </option>
             {departments.map((dept) => (
               <option key={dept._id} value={dept.departmentId}>
-                {dept.fullName}
+                {dept.name}
               </option>
             ))}
           </select>
