@@ -39,7 +39,6 @@ interface PaginationInfo {
 interface DepartmentPapersListProps {
   mode: 'manage' | 'access'
   userId?: string
-  supabaseId?: string
   userDepartments?: string[]
   userPapers?: string[]
   onToggleDepartmentAccess?: (deptId: string, deptName: string, hasAccess: boolean) => Promise<void>
@@ -51,7 +50,7 @@ interface DepartmentPapersListProps {
 
 export function DepartmentPapersList({
   mode,
-  supabaseId,
+  userId,
   userDepartments = [],
   userPapers = [],
   onToggleDepartmentAccess,
@@ -84,8 +83,8 @@ export function DepartmentPapersList({
     setError(null)
     try {
       // Use different endpoint based on mode
-      const url = mode === 'access' && supabaseId
-        ? API_ENDPOINTS.userDepartments(supabaseId)
+      const url = mode === 'access' && userId
+        ? API_ENDPOINTS.userDepartments(userId)
         : API_ENDPOINTS.departments
       
       const result = await apiClient.get(url)
@@ -124,8 +123,8 @@ export function DepartmentPapersList({
     try {
       // Use different endpoint based on mode
       let url: string
-      if (mode === 'access' && supabaseId) {
-        url = API_ENDPOINTS.userPapers(supabaseId, deptId, page)
+      if (mode === 'access' && userId) {
+        url = API_ENDPOINTS.userPapers(userId, deptId, page)
       } else {
         url = API_ENDPOINTS.papers(deptId, page)
       }
@@ -164,8 +163,8 @@ export function DepartmentPapersList({
     try {
       // Use different endpoint based on mode
       let url: string
-      if (mode === 'access' && supabaseId) {
-        url = API_ENDPOINTS.userGeneralPapers(supabaseId, page)
+      if (mode === 'access' && userId) {
+        url = API_ENDPOINTS.userGeneralPapers(userId, page)
       } else {
         url = API_ENDPOINTS.generalPapers(page)
       }
