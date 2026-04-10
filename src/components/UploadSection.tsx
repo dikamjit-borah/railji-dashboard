@@ -150,6 +150,7 @@ export function UploadSection() {
       setCurrentPaper({
         paperType: '',
         department: '',
+        designation: '',
         paperCode: '',
         year: new Date().getFullYear().toString(),
         shift: 'morning',
