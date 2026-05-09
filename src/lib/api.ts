@@ -56,4 +56,8 @@ export const API_ENDPOINTS = {
     `${DASHBOARD_API_BASE_URL}/users/${userId}/toggle`,
   grantAccess: `${DASHBOARD_API_BASE_URL}/users/grant-access`,
   revokeAccess: `${DASHBOARD_API_BASE_URL}/users/revoke-access`,
+
+  // Subscriptions - Dashboard API
+  subscriptions: (page?: number, limit?: number) =>
+    `${DASHBOARD_API_BASE_URL}/users/subscriptions?page=${page || 1}&limit=${limit || 10}`,
 };

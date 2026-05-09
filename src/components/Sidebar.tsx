@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { FileText, BookOpen, Users, User, Home, BarChart3, X, LogOut } from 'lucide-react'
+import { FileText, BookOpen, Users, User, Home, BarChart3, X, LogOut, Bell } from 'lucide-react'
 
 interface SidebarProps {
   isOpen?: boolean
@@ -92,6 +92,12 @@ export function Sidebar({ isOpen = true, onClose, onLogout, user }: SidebarProps
             icon={Users}
             label="Users"
             isActive={isActive('/users')}
+          />
+          <NavItem
+            href="/subscriptions"
+            icon={Bell}
+            label="Subscriptions"
+            isActive={isActive('/subscriptions')}
           />
         </div>
 
