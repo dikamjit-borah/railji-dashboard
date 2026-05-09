@@ -2,10 +2,12 @@
 
 import { useState, useEffect } from 'react'
 import { API_ENDPOINTS } from '@/lib/api'
+import { apiClient, getErrorMessage } from '@/lib/api-client'
 
 interface PaperData {
   paperType: 'sectional' | 'full' | 'general' | ''
   department: string
+  designation: string
   paperCode: string
   year: string
   shift: 'morning' | 'afternoon' | 'evening' | 'night' | ''
@@ -28,7 +30,6 @@ interface Department {
   departmentId: string
   slug: string
   name: string
-  fullName: string
   description: string
   icon: string
   img: string
@@ -56,10 +57,14 @@ export function PaperDetailsForm({
   submitButtonText,
 }: PaperDetailsFormProps) {
   const [departments, setDepartments] = useState<Department[]>([])
+  const [designations, setDesignations] = useState<string[]>([])
   const [paperCodes, setPaperCodes] = useState<string[]>([])
   const [loadingDepartments, setLoadingDepartments] = useState(false)
+  const [loadingDesignations, setLoadingDesignations] = useState(false)
   const [loadingCodes, setLoadingCodes] = useState(false)
+  const [showAddDesignationModal, setShowAddDesignationModal] = useState(false)
   const [showAddPaperCodeModal, setShowAddPaperCodeModal] = useState(false)
+  const [newDesignation, setNewDesignation] = useState('')
   const [newPaperCode, setNewPaperCode] = useState('')
 
   // Fetch departments on mount
@@ -67,12 +72,21 @@ export function PaperDetailsForm({
     fetchDepartments()
   }, [])
 
-  // Fetch paper codes when department or paperType changes
+  // Fetch designations when department changes
   useEffect(() => {
-    if (currentPaper.department && currentPaper.paperType === 'sectional') {
-      fetchPaperCodes(currentPaper.department, currentPaper.paperType)
+    if (currentPaper.department && currentPaper.paperType !== 'general') {
+      fetchDesignations(currentPaper.department)
+    } else {
+      setDesignations([])
     }
   }, [currentPaper.department, currentPaper.paperType])
+
+  // Fetch paper codes when department, designation, or paperType changes
+  useEffect(() => {
+    if (currentPaper.department && currentPaper.designation && currentPaper.paperType === 'sectional') {
+      fetchPaperCodes(currentPaper.department, currentPaper.paperType, currentPaper.designation)
+    }
+  }, [currentPaper.department, currentPaper.designation, currentPaper.paperType])
 
   // Handle paper type changes
   useEffect(() => {
@@ -94,13 +108,12 @@ export function PaperDetailsForm({
   const fetchDepartments = async () => {
     setLoadingDepartments(true)
     try {
-      const response = await fetch(API_ENDPOINTS.departments)
-      const data = await response.json()
+      const result = await apiClient.get(API_ENDPOINTS.departments)
       
-      if (data.success && data.data) {
-        setDepartments(data.data)
+      if (result.success && result.data) {
+        setDepartments(result.data)
       } else {
-        throw new Error('Invalid response format')
+        throw new Error(getErrorMessage(result))
       }
     } catch (error) {
       console.error('Failed to fetch departments:', error)
@@ -110,17 +123,37 @@ export function PaperDetailsForm({
     }
   }
 
-  const fetchPaperCodes = async (departmentId: string, paperType: string) => {
+  const fetchDesignations = async (departmentId: string) => {
+    setLoadingDesignations(true)
+    try {
+      const result = await apiClient.get(API_ENDPOINTS.departmentDesignations(departmentId))
+
+      if (result.success && result.data?.metadata?.designations) {
+        const designationsList = result.data.metadata.designations
+        setDesignations(designationsList)
+      } else {
+        console.error('Failed to fetch designations:', getErrorMessage(result))
+        setDesignations([])
+      }
+    } catch (error) {
+      console.error('Failed to fetch designations:', error)
+      setDesignations([])
+    } finally {
+      setLoadingDesignations(false)
+    }
+  }
+
+  const fetchPaperCodes = async (departmentId: string, paperType: string, designation: string) => {
     setLoadingCodes(true)
     try {
-      const response = await fetch(API_ENDPOINTS.papersByType(departmentId, paperType))
-      const data = await response.json()
+      const result = await apiClient.get(API_ENDPOINTS.papersByType(departmentId, paperType, designation))
 
-      if (data.success && data.data?.metadata?.paperCodes) {
-        const codes = data.data.metadata.paperCodes.nonGeneral || []
+      if (result.success && result.data?.metadata?.paperCodes?.nonGeneral) {
+        const codes = result.data.metadata.paperCodes.nonGeneral
         setPaperCodes(codes)
       } else {
-        throw new Error('Invalid response format')
+        console.error('Failed to fetch paper codes:', getErrorMessage(result))
+        setPaperCodes([])
       }
     } catch (error) {
       console.error('Failed to fetch paper codes:', error)
@@ -133,20 +166,32 @@ export function PaperDetailsForm({
   const fetchGeneralPaperCodes = async (paperType: string) => {
     setLoadingCodes(true)
     try {
-      const response = await fetch(API_ENDPOINTS.generalPapersByType(paperType))
-      const data = await response.json()
+      const result = await apiClient.get(API_ENDPOINTS.generalPapersByType(paperType))
 
-      if (data.success && data.data?.metadata?.paperCodes) {
-        const codes = data.data.metadata.paperCodes.general || []
+      if (result.success && result.data?.metadata?.paperCodes?.general) {
+        const codes = result.data.metadata.paperCodes.general
         setPaperCodes(codes)
       } else {
-        throw new Error('Invalid response format')
+        console.error('Failed to fetch general paper codes:', getErrorMessage(result))
+        setPaperCodes([])
       }
     } catch (error) {
       console.error('Failed to fetch general paper codes:', error)
       setPaperCodes([])
     } finally {
       setLoadingCodes(false)
+    }
+  }
+
+  const handleAddDesignation = () => {
+    if (newDesignation.trim()) {
+      setDesignations([...designations, newDesignation.trim()])
+      setCurrentPaper({
+        ...currentPaper,
+        designation: newDesignation.trim(),
+      })
+      setNewDesignation('')
+      setShowAddDesignationModal(false)
     }
   }
 
@@ -187,8 +232,8 @@ export function PaperDetailsForm({
       return baseFilled && currentPaper.department
     }
 
-    // For sectional papers, both department and paperCode are required
-    return baseFilled && currentPaper.department && currentPaper.paperCode
+    // For sectional papers, department, designation, and paperCode are required
+    return baseFilled && currentPaper.department && currentPaper.designation && currentPaper.paperCode
   }
 
   return (
@@ -227,6 +272,7 @@ export function PaperDetailsForm({
               setCurrentPaper({
                 ...currentPaper,
                 department: e.target.value,
+                designation: '',
                 paperCode: '',
               })
             }
@@ -244,9 +290,55 @@ export function PaperDetailsForm({
             </option>
             {departments.map((dept) => (
               <option key={dept._id} value={dept.departmentId}>
-                {dept.fullName}
+                {dept.name}
               </option>
             ))}
+          </select>
+        </div>
+
+        {/* Designation */}
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-2">
+            Designation {currentPaper.paperType !== 'general' && <span className="text-red-500">*</span>}
+          </label>
+          <select
+            value={currentPaper.designation}
+            onChange={(e) => {
+              if (e.target.value === '__add_new__') {
+                setShowAddDesignationModal(true)
+              } else {
+                setCurrentPaper({
+                  ...currentPaper,
+                  designation: e.target.value,
+                  paperCode: '',
+                })
+              }
+            }}
+            disabled={
+              !currentPaper.paperType ||
+              currentPaper.paperType === 'general' ||
+              !currentPaper.department ||
+              loadingDesignations
+            }
+            className="input-minimal w-full disabled:opacity-50"
+          >
+            <option value="">
+              {!currentPaper.paperType
+                ? 'Select paper type first'
+                : currentPaper.paperType === 'general'
+                  ? 'Not applicable for General papers'
+                  : !currentPaper.department
+                    ? 'Select department first'
+                    : loadingDesignations
+                      ? 'Loading designations...'
+                      : 'Select designation'}
+            </option>
+            {designations.map((designation) => (
+              <option key={designation} value={designation}>
+                {designation}
+              </option>
+            ))}
+            <option value="__add_new__">+ Add New Designation</option>
           </select>
         </div>
 
@@ -270,7 +362,7 @@ export function PaperDetailsForm({
             disabled={
               !currentPaper.paperType ||
               currentPaper.paperType === 'full' ||
-              (currentPaper.paperType === 'sectional' && !currentPaper.department) ||
+              (currentPaper.paperType === 'sectional' && (!currentPaper.department || !currentPaper.designation)) ||
               loadingCodes
             }
             className="input-minimal w-full disabled:opacity-50"
@@ -282,9 +374,11 @@ export function PaperDetailsForm({
                   ? 'Not applicable for Full papers'
                   : currentPaper.paperType === 'sectional' && !currentPaper.department
                     ? 'Select department first'
-                    : loadingCodes
-                      ? 'Loading codes...'
-                      : 'Select section code'}
+                    : currentPaper.paperType === 'sectional' && !currentPaper.designation
+                      ? 'Select designation first'
+                      : loadingCodes
+                        ? 'Loading codes...'
+                        : 'Select section code'}
             </option>
             {paperCodes.map((code) => (
               <option key={code} value={code}>
@@ -494,6 +588,49 @@ export function PaperDetailsForm({
         </div>
       </div>
 
+      {/* Add Designation Modal */}
+      {showAddDesignationModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h2 className="text-lg font-semibold text-slate-950 mb-4">Add New Designation</h2>
+            <input
+              type="text"
+              placeholder="Enter designation (e.g., Junior Engineer (Level 6))"
+              value={newDesignation}
+              onChange={(e) => setNewDesignation(e.target.value)}
+              className="input-minimal w-full mb-4"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  handleAddDesignation()
+                }
+              }}
+            />
+            <div className="flex gap-3">
+              <button
+                onClick={handleAddDesignation}
+                disabled={!newDesignation.trim()}
+                className={`flex-1 py-2 px-4 rounded font-medium ${
+                  newDesignation.trim()
+                    ? 'btn-minimal-primary'
+                    : 'btn-minimal-primary opacity-50 cursor-not-allowed'
+                }`}
+              >
+                Add
+              </button>
+              <button
+                onClick={() => {
+                  setShowAddDesignationModal(false)
+                  setNewDesignation('')
+                }}
+                className="flex-1 py-2 px-4 rounded font-medium btn-minimal-secondary"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Add Paper Code Modal */}
       {showAddPaperCodeModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -505,7 +642,7 @@ export function PaperDetailsForm({
               value={newPaperCode}
               onChange={(e) => setNewPaperCode(e.target.value)}
               className="input-minimal w-full mb-4"
-              onKeyPress={(e) => {
+              onKeyDown={(e) => {
                 if (e.key === 'Enter') {
                   handleAddPaperCode()
                 }
