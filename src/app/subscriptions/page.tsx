@@ -1,9 +1,12 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { toast } from 'sonner'
 import { PageHeader } from '@/components/PageHeader'
-import { Bell, Search, Filter, RefreshCw, ChevronLeft, ChevronRight, User } from 'lucide-react'
-import { ToastContainer, useToast } from '@/components/Toast'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Pagination } from '@/components/ui/pagination'
+import { Bell, Search, Filter, RefreshCw, User } from 'lucide-react'
 import { API_ENDPOINTS } from '@/lib/api'
 import { apiClient } from '@/lib/api-client'
 
@@ -29,6 +32,17 @@ interface Subscription {
   userDetails: UserDetails
 }
 
+type StatusVariant = 'success' | 'danger' | 'warning' | 'default'
+
+function getStatusVariant(status: string): StatusVariant {
+  const map: Record<string, StatusVariant> = {
+    active: 'success',
+    expired: 'danger',
+    pending: 'warning',
+  }
+  return map[status] ?? 'default'
+}
+
 export default function SubscriptionsPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([])
@@ -37,12 +51,9 @@ export default function SubscriptionsPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [total, setTotal] = useState(0)
-  const [limit] = useState(10)
-  const toast = useToast()
+  const limit = 10
 
-  useEffect(() => {
-    fetchSubscriptions()
-  }, [currentPage])
+  useEffect(() => { fetchSubscriptions() }, [currentPage])
 
   const fetchSubscriptions = async () => {
     try {
@@ -54,8 +65,7 @@ export default function SubscriptionsPage() {
       } else {
         toast.error('Failed to fetch subscriptions')
       }
-    } catch (error) {
-      console.error('Error fetching subscriptions:', error)
+    } catch {
       toast.error('Error connecting to server')
     } finally {
       setLoading(false)
@@ -68,43 +78,21 @@ export default function SubscriptionsPage() {
     await fetchSubscriptions()
   }
 
-  const handlePageChange = (newPage: number) => {
-    if (newPage >= 1 && newPage <= totalPages) {
-      setCurrentPage(newPage)
-      setLoading(true)
-    }
-  }
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    })
-  }
-
-  const getStatusBadge = (status: string) => {
-    const styles = {
-      active: 'bg-green-100 text-green-700',
-      expired: 'bg-red-100 text-red-700',
-      pending: 'bg-yellow-100 text-yellow-700'
-    }
-    return styles[status as keyof typeof styles] || 'bg-slate-100 text-slate-700'
-  }
+  const formatDate = (dateString: string) =>
+    new Date(dateString).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
 
   const activeCount = subscriptions.filter((s) => s.status === 'active').length
 
+  const COLS = '200px 180px 150px 150px 120px 120px 100px'
+
   if (loading) {
     return (
-      <div className="bg-slate-50 min-h-screen">
-        <PageHeader
-          title="Subscriptions"
-          subtitle="Loading subscriptions..."
-        />
-        <div className="px-4 md:px-8 py-8 md:py-12">
-          <div className="animate-pulse space-y-4">
+      <div className="bg-warm-50 min-h-screen">
+        <PageHeader title="Subscriptions" subtitle="Loading subscriptions…" />
+        <div className="px-4 md:px-8 py-8">
+          <div className="space-y-3">
             {[...Array(5)].map((_, i) => (
-              <div key={i} className="h-16 bg-slate-200 rounded"></div>
+              <div key={i} className="skeleton h-16 w-full rounded-xl" />
             ))}
           </div>
         </div>
@@ -113,43 +101,41 @@ export default function SubscriptionsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="bg-warm-50 min-h-screen">
       <PageHeader
         title="Subscriptions"
-        subtitle={`Manage user subscriptions (${total} total, ${activeCount} active)`}
-        action={{
-          label: refreshing ? 'Refreshing...' : 'Refresh',
-          onClick: handleRefresh,
-          icon: RefreshCw,
-          disabled: refreshing
-        }}
+        subtitle={`${total} total · ${activeCount} active`}
+        action={{ label: refreshing ? 'Refreshing…' : 'Refresh', onClick: handleRefresh, icon: RefreshCw, disabled: refreshing }}
       />
 
-      <div className="px-4 md:px-8 py-8 md:py-12">
-        {/* Search and Filter Bar */}
-        <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4 mb-6">
-          <div className="flex flex-col md:flex-row gap-4">
+      <div className="px-4 md:px-8 py-6 space-y-5">
+        {/* Search + filter bar */}
+        <div className="bg-white rounded-xl border border-warm-200 shadow-card p-4">
+          <div className="flex flex-col md:flex-row gap-3">
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-warm-400 pointer-events-none" />
               <input
                 type="text"
-                placeholder="Search subscriptions..."
+                placeholder="Search subscriptions…"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent"
+                className="input-minimal w-full pl-9"
               />
             </div>
-            <button className="flex items-center gap-2 px-4 py-2 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors">
+            <Button variant="outline" size="md" className="flex items-center gap-2">
               <Filter className="w-4 h-4" />
-              <span>Filters</span>
-            </button>
+              Filters
+            </Button>
           </div>
         </div>
 
         {/* Table */}
-        <div className="space-y-0 border border-slate-200 bg-white overflow-hidden rounded-lg overflow-x-auto">
-          {/* Table Header */}
-          <div className="grid gap-4 px-6 py-4 bg-slate-50 border-b border-slate-100 text-xs font-semibold text-slate-600 uppercase tracking-widest" style={{ gridTemplateColumns: '200px 180px 150px 150px 120px 120px 100px', minWidth: '1020px' }}>
+        <div className="bg-white border border-warm-200 rounded-xl shadow-card overflow-hidden overflow-x-auto">
+          {/* Header */}
+          <div
+            className="grid gap-4 px-6 py-3 bg-warm-50 border-b border-warm-100 text-xs font-semibold text-warm-500 uppercase tracking-widest"
+            style={{ gridTemplateColumns: COLS, minWidth: '1020px' }}
+          >
             <div>User</div>
             <div>Department</div>
             <div>Access Type</div>
@@ -159,146 +145,65 @@ export default function SubscriptionsPage() {
             <div>User Type</div>
           </div>
 
-          {/* Table Body */}
-          {subscriptions.map((subscription, index) => (
+          {/* Rows */}
+          {subscriptions.map((sub, index) => (
             <div
-              key={subscription._id}
-              className={`grid gap-4 px-6 py-4 items-center hover:bg-slate-50 transition-colors ${
-                index !== subscriptions.length - 1 ? 'border-b border-slate-100' : ''
+              key={sub._id}
+              className={`grid gap-4 px-6 py-4 items-center hover:bg-warm-50 transition-colors ${
+                index !== subscriptions.length - 1 ? 'border-b border-warm-100' : ''
               }`}
-              style={{ gridTemplateColumns: '200px 180px 150px 150px 120px 120px 100px', minWidth: '1020px' }}
+              style={{ gridTemplateColumns: COLS, minWidth: '1020px' }}
             >
-              {/* User */}
-              <div className="min-w-0">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-slate-200 rounded-full flex items-center justify-center">
-                    <User className="w-4 h-4 text-slate-600" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="font-medium text-slate-950 truncate text-sm">
-                      {subscription.userDetails.email}
-                    </p>
-                    <p className="text-xs text-slate-500 font-mono truncate">
-                      {subscription.userId}
-                    </p>
-                  </div>
+              <div className="min-w-0 flex items-center gap-3">
+                <div className="w-8 h-8 bg-rail-100 rounded-full flex items-center justify-center flex-shrink-0">
+                  <User className="w-4 h-4 text-rail-500" />
+                </div>
+                <div className="min-w-0">
+                  <p className="font-medium text-rail-900 truncate text-sm">{sub.userDetails.email}</p>
+                  <p className="text-xs text-warm-400 font-mono truncate">{sub.userId}</p>
                 </div>
               </div>
 
-              {/* Department */}
               <div className="min-w-0">
-                <p className="text-sm text-slate-700 capitalize truncate">
-                  {subscription.departmentId}
-                </p>
+                <p className="text-sm text-rail-700 capitalize truncate">{sub.departmentId}</p>
               </div>
 
-              {/* Access Type */}
               <div className="min-w-0">
-                <p className="text-sm text-slate-700 capitalize truncate">
-                  {subscription.accessType}
-                </p>
+                <p className="text-sm text-rail-700 capitalize truncate">{sub.accessType}</p>
               </div>
 
-              {/* Start Date */}
-              <div className="text-sm text-slate-600">
-                {formatDate(subscription.startDate)}
-              </div>
+              <div className="text-sm text-warm-600">{formatDate(sub.startDate)}</div>
+              <div className="text-sm text-warm-600">{formatDate(sub.endDate)}</div>
 
-              {/* End Date */}
-              <div className="text-sm text-slate-600">
-                {formatDate(subscription.endDate)}
-              </div>
-
-              {/* Status */}
               <div>
-                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${getStatusBadge(subscription.status)}`}>
-                  {subscription.status}
-                </span>
+                <Badge variant={getStatusVariant(sub.status)}>{sub.status}</Badge>
               </div>
 
-              {/* User Type */}
-              <div className="text-sm text-slate-600 capitalize">
-                {subscription.userDetails.userType}
-              </div>
+              <div className="text-sm text-warm-600 capitalize">{sub.userDetails.userType}</div>
             </div>
           ))}
         </div>
 
+        {/* Empty state */}
         {subscriptions.length === 0 && (
-          <div className="text-center py-12 bg-white rounded-lg border border-slate-200">
-            <Bell className="w-12 h-12 text-slate-400 mx-auto mb-4" />
-            <p className="text-slate-600 mb-4">No subscriptions found</p>
-            <p className="text-sm text-slate-500">Subscriptions will appear here once users subscribe</p>
+          <div className="text-center py-16 bg-white rounded-xl border border-warm-200">
+            <div className="w-12 h-12 bg-warm-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Bell className="w-6 h-6 text-warm-400" />
+            </div>
+            <p className="font-medium text-rail-800 mb-1">No subscriptions found</p>
+            <p className="text-sm text-warm-400">Subscriptions will appear here once users subscribe</p>
           </div>
         )}
 
         {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="mt-6 flex items-center justify-between">
-            <div className="text-sm text-slate-600">
-              Showing {((currentPage - 1) * limit) + 1} to {Math.min(currentPage * limit, total)} of {total} subscriptions
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage === 1}
-                className="px-3 py-2 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1"
-              >
-                <ChevronLeft className="w-4 h-4" />
-                Previous
-              </button>
-              
-              <div className="flex items-center gap-1">
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
-                  const showPage = 
-                    page === 1 || 
-                    page === totalPages || 
-                    (page >= currentPage - 1 && page <= currentPage + 1)
-                  
-                  const showEllipsis = 
-                    (page === currentPage - 2 && currentPage > 3) ||
-                    (page === currentPage + 2 && currentPage < totalPages - 2)
-
-                  if (showEllipsis) {
-                    return (
-                      <span key={page} className="px-2 text-slate-400">
-                        ...
-                      </span>
-                    )
-                  }
-
-                  if (!showPage) return null
-
-                  return (
-                    <button
-                      key={page}
-                      onClick={() => handlePageChange(page)}
-                      className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                        currentPage === page
-                          ? 'bg-slate-900 text-white'
-                          : 'text-slate-700 hover:bg-slate-100'
-                      }`}
-                    >
-                      {page}
-                    </button>
-                  )
-                })}
-              </div>
-
-              <button
-                onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === totalPages}
-                className="px-3 py-2 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1"
-              >
-                Next
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        )}
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          total={total}
+          limit={limit}
+          onPageChange={(page) => { setCurrentPage(page); setLoading(true) }}
+        />
       </div>
-
-      <ToastContainer toasts={toast.toasts} onRemove={toast.removeToast} />
     </div>
   )
 }
