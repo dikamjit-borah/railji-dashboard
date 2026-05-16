@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react'
 import { API_ENDPOINTS } from '@/lib/api'
 import { apiClient, getErrorMessage } from '@/lib/api-client'
+import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 
 interface PaperData {
   paperType: 'sectional' | 'full' | 'general' | ''
@@ -241,7 +243,7 @@ export function PaperDetailsForm({
       <div className="max-w-2xl space-y-6">
         {/* Paper Type */}
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-2">
+          <label className="block text-sm font-medium text-rail-700 mb-2">
             Paper Type <span className="text-red-500">*</span>
           </label>
           <select
@@ -263,7 +265,7 @@ export function PaperDetailsForm({
 
         {/* Department */}
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-2">
+          <label className="block text-sm font-medium text-rail-700 mb-2">
             Department <span className="text-red-500">*</span>
           </label>
           <select
@@ -298,7 +300,7 @@ export function PaperDetailsForm({
 
         {/* Designation */}
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-2">
+          <label className="block text-sm font-medium text-rail-700 mb-2">
             Designation {currentPaper.paperType !== 'general' && <span className="text-red-500">*</span>}
           </label>
           <select
@@ -344,7 +346,7 @@ export function PaperDetailsForm({
 
         {/* Paper Code */}
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-2">
+          <label className="block text-sm font-medium text-rail-700 mb-2">
             Section Code {currentPaper.paperType !== 'full' && <span className="text-red-500">*</span>}
           </label>
           <select
@@ -391,7 +393,7 @@ export function PaperDetailsForm({
 
         {/* Year */}
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-2">
+          <label className="block text-sm font-medium text-rail-700 mb-2">
             Year <span className="text-red-500">*</span>
           </label>
           <input
@@ -412,7 +414,7 @@ export function PaperDetailsForm({
 
         {/* Shift */}
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-2">
+          <label className="block text-sm font-medium text-rail-700 mb-2">
             Shift <span className="text-red-500">*</span>
           </label>
           <select
@@ -435,7 +437,7 @@ export function PaperDetailsForm({
 
         {/* Paper Name */}
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-2">
+          <label className="block text-sm font-medium text-rail-700 mb-2">
             Paper Name <span className="text-red-500">*</span>
           </label>
           <input
@@ -454,7 +456,7 @@ export function PaperDetailsForm({
 
         {/* Paper Description */}
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-2">
+          <label className="block text-sm font-medium text-rail-700 mb-2">
             Paper Description
           </label>
           <textarea
@@ -474,7 +476,7 @@ export function PaperDetailsForm({
         {/* Pass Percentage and Negative Marks */}
         <div className="grid grid-cols-2 gap-6">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
+            <label className="block text-sm font-medium text-rail-700 mb-2">
               Pass Percentage (%) <span className="text-red-500">*</span>
             </label>
             <input
@@ -500,7 +502,7 @@ export function PaperDetailsForm({
             )}
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
+            <label className="block text-sm font-medium text-rail-700 mb-2">
               Negative Marks <span className="text-red-500">*</span>
             </label>
             <input
@@ -530,7 +532,7 @@ export function PaperDetailsForm({
 
         {/* Duration */}
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-2">
+          <label className="block text-sm font-medium text-rail-700 mb-2">
             Duration (minutes) <span className="text-red-500">*</span>
           </label>
           <input
@@ -562,117 +564,77 @@ export function PaperDetailsForm({
               }
               className="w-4 h-4"
             />
-            <span className="text-sm font-medium text-slate-700">Free</span>
+            <span className="text-sm font-medium text-rail-700">Free</span>
           </label>
         </div>
 
         {/* Buttons */}
         <div className="flex gap-3 pt-8">
-          <button
-            onClick={onBack}
-            className="flex-1 py-2 px-4 rounded font-medium btn-minimal-secondary"
-          >
+          <Button variant="outline" size="lg" onClick={onBack}>
             Back
-          </button>
-          <button
-            onClick={onSubmit}
+          </Button>
+          <Button
+            variant="primary"
+            size="lg"
             disabled={!isPaperComplete() || isSubmitting}
-            className={`flex-1 py-2 px-4 rounded font-medium transition-all ${
-              isPaperComplete() && !isSubmitting
-                ? 'btn-minimal-primary'
-                : 'btn-minimal-primary opacity-50 cursor-not-allowed'
-            }`}
+            onClick={onSubmit}
           >
-            {isSubmitting ? 'Processing...' : submitButtonText}
-          </button>
+            {isSubmitting ? 'Processing…' : submitButtonText}
+          </Button>
         </div>
       </div>
 
       {/* Add Designation Modal */}
-      {showAddDesignationModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-            <h2 className="text-lg font-semibold text-slate-950 mb-4">Add New Designation</h2>
-            <input
-              type="text"
-              placeholder="Enter designation (e.g., Junior Engineer (Level 6))"
-              value={newDesignation}
-              onChange={(e) => setNewDesignation(e.target.value)}
-              className="input-minimal w-full mb-4"
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  handleAddDesignation()
-                }
-              }}
-            />
-            <div className="flex gap-3">
-              <button
-                onClick={handleAddDesignation}
-                disabled={!newDesignation.trim()}
-                className={`flex-1 py-2 px-4 rounded font-medium ${
-                  newDesignation.trim()
-                    ? 'btn-minimal-primary'
-                    : 'btn-minimal-primary opacity-50 cursor-not-allowed'
-                }`}
-              >
-                Add
-              </button>
-              <button
-                onClick={() => {
-                  setShowAddDesignationModal(false)
-                  setNewDesignation('')
-                }}
-                className="flex-1 py-2 px-4 rounded font-medium btn-minimal-secondary"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <Dialog open={showAddDesignationModal} onOpenChange={(open) => { if (!open) { setShowAddDesignationModal(false); setNewDesignation('') } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add New Designation</DialogTitle>
+          </DialogHeader>
+          <input
+            type="text"
+            placeholder="e.g., Junior Engineer (Level 6)"
+            value={newDesignation}
+            onChange={(e) => setNewDesignation(e.target.value)}
+            className="input-minimal w-full"
+            onKeyDown={(e) => { if (e.key === 'Enter') handleAddDesignation() }}
+            autoFocus
+          />
+          <DialogFooter>
+            <Button variant="outline" size="md" onClick={() => { setShowAddDesignationModal(false); setNewDesignation('') }}>
+              Cancel
+            </Button>
+            <Button variant="primary" size="md" disabled={!newDesignation.trim()} onClick={handleAddDesignation}>
+              Add
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Add Paper Code Modal */}
-      {showAddPaperCodeModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-            <h2 className="text-lg font-semibold text-slate-950 mb-4">Add New Section Code</h2>
-            <input
-              type="text"
-              placeholder="Enter section code (e.g., RRB-2024-001)"
-              value={newPaperCode}
-              onChange={(e) => setNewPaperCode(e.target.value)}
-              className="input-minimal w-full mb-4"
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  handleAddPaperCode()
-                }
-              }}
-            />
-            <div className="flex gap-3">
-              <button
-                onClick={handleAddPaperCode}
-                disabled={!newPaperCode.trim()}
-                className={`flex-1 py-2 px-4 rounded font-medium ${
-                  newPaperCode.trim()
-                    ? 'btn-minimal-primary'
-                    : 'btn-minimal-primary opacity-50 cursor-not-allowed'
-                }`}
-              >
-                Add
-              </button>
-              <button
-                onClick={() => {
-                  setShowAddPaperCodeModal(false)
-                  setNewPaperCode('')
-                }}
-                className="flex-1 py-2 px-4 rounded font-medium btn-minimal-secondary"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <Dialog open={showAddPaperCodeModal} onOpenChange={(open) => { if (!open) { setShowAddPaperCodeModal(false); setNewPaperCode('') } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add New Section Code</DialogTitle>
+          </DialogHeader>
+          <input
+            type="text"
+            placeholder="e.g., RRB-2024-001"
+            value={newPaperCode}
+            onChange={(e) => setNewPaperCode(e.target.value)}
+            className="input-minimal w-full"
+            onKeyDown={(e) => { if (e.key === 'Enter') handleAddPaperCode() }}
+            autoFocus
+          />
+          <DialogFooter>
+            <Button variant="outline" size="md" onClick={() => { setShowAddPaperCodeModal(false); setNewPaperCode('') }}>
+              Cancel
+            </Button>
+            <Button variant="primary" size="md" disabled={!newPaperCode.trim()} onClick={handleAddPaperCode}>
+              Add
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   )
 }

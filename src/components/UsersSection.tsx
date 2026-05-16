@@ -2,25 +2,25 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { User, ToggleLeft, ToggleRight, Settings, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react'
+import { User, ToggleLeft, ToggleRight, Settings, RefreshCw } from 'lucide-react'
+import { toast } from 'sonner'
 import { PageHeader } from './PageHeader'
-import { ToastContainer, useToast } from './Toast'
+import { Button } from './ui/button'
+import { Badge } from './ui/badge'
+import { Pagination } from './ui/pagination'
 import { UsersAPI, User as UserType } from '@/lib/users-api'
 
 export function UsersSection() {
   const router = useRouter()
-  const [users, setUsers] = useState<UserType[]>([])
-  const [loading, setLoading] = useState(true)
+  const [users, setUsers]           = useState<UserType[]>([])
+  const [loading, setLoading]       = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
-  const [total, setTotal] = useState(0)
-  const [limit] = useState(10)
-  const toast = useToast()
+  const [total, setTotal]           = useState(0)
+  const limit = 10
 
-  useEffect(() => {
-    fetchUsers()
-  }, [currentPage])
+  useEffect(() => { fetchUsers() }, [currentPage])
 
   const fetchUsers = async () => {
     try {
@@ -32,8 +32,7 @@ export function UsersSection() {
       } else {
         toast.error('Failed to fetch users')
       }
-    } catch (error) {
-      console.error('Error fetching users:', error)
+    } catch {
       toast.error('Error connecting to server')
     } finally {
       setLoading(false)
@@ -46,24 +45,16 @@ export function UsersSection() {
     await fetchUsers()
   }
 
-  const handlePageChange = (newPage: number) => {
-    if (newPage >= 1 && newPage <= totalPages) {
-      setCurrentPage(newPage)
-      setLoading(true)
-    }
-  }
-
   const toggleUserStatus = async (userId: string, username: string) => {
     try {
       const data = await UsersAPI.toggleUserStatus(userId)
       if (data.success) {
-        toast.success(`${username}'s status updated successfully`)
-        fetchUsers() // Refresh the list
+        toast.success(`${username}'s status updated`)
+        fetchUsers()
       } else {
         toast.error('Failed to update user status')
       }
-    } catch (error) {
-      console.error('Error toggling user status:', error)
+    } catch {
       toast.error('Error updating user status')
     }
   }
@@ -72,51 +63,47 @@ export function UsersSection() {
     router.push(`/users/${user._id}/access`)
   }
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
+  const formatDate = (dateString: string) =>
+    new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric', month: 'short', day: 'numeric',
     })
-  }
 
-  const activeCount = users.filter((u) => u.isActive !== false).length
+  const activeCount = users.filter(u => u.isActive !== false).length
 
   if (loading) {
     return (
-      <div className="bg-slate-50 min-h-screen">
-        <PageHeader
-          title="Users"
-          subtitle="Loading users..."
-        />
-        <div className="px-4 md:px-8 py-8 md:py-12">
-          <div className="animate-pulse space-y-4">
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="h-16 bg-slate-200 rounded"></div>
-            ))}
-          </div>
+      <div className="bg-warm-50 min-h-screen">
+        <PageHeader title="Users" subtitle="Loading users…" />
+        <div className="px-4 md:px-8 py-6 space-y-3">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="skeleton h-14 w-full" />
+          ))}
         </div>
       </div>
     )
   }
 
   return (
-    <div className="bg-slate-50 min-h-screen">
+    <div className="bg-warm-50 min-h-screen">
       <PageHeader
         title="Users"
-        subtitle={`Manage platform users (${total} total, ${activeCount} active)`}
+        subtitle={`${total} total · ${activeCount} active`}
         action={{
-          label: refreshing ? 'Refreshing...' : 'Refresh',
+          label: refreshing ? 'Refreshing…' : 'Refresh',
           onClick: handleRefresh,
           icon: RefreshCw,
-          disabled: refreshing
+          disabled: refreshing,
         }}
       />
 
-      <div className="px-4 md:px-8 py-8 md:py-12">
-        <div className="space-y-0 border border-slate-200 bg-white overflow-hidden rounded-lg overflow-x-auto">
-          {/* Table Header */}
-          <div className="grid gap-4 px-6 py-4 bg-slate-50 border-b border-slate-100 text-xs font-semibold text-slate-600 uppercase tracking-widest" style={{ gridTemplateColumns: '180px 220px 200px 300px 110px 100px 100px', minWidth: '1210px' }}>
+      <div className="px-4 md:px-8 py-6 space-y-4">
+        {/* Table */}
+        <div className="card overflow-hidden overflow-x-auto">
+          {/* Header row */}
+          <div
+            className="grid gap-4 px-6 py-3 bg-warm-50 border-b border-warm-200 text-xs font-semibold text-warm-500 uppercase tracking-wider"
+            style={{ gridTemplateColumns: '180px 220px 200px 300px 110px 110px 80px', minWidth: '1240px' }}
+          >
             <div>User</div>
             <div>Email</div>
             <div>User ID</div>
@@ -126,161 +113,88 @@ export function UsersSection() {
             <div className="text-right">Actions</div>
           </div>
 
-          {/* Table Body */}
+          {/* Body */}
           {users.map((user, index) => (
             <div
               key={user._id}
-              className={`grid gap-4 px-6 py-4 items-center hover:bg-slate-50 transition-colors ${
-                index !== users.length - 1 ? 'border-b border-slate-100' : ''
+              className={`grid gap-4 px-6 py-4 items-center hover:bg-warm-50 transition-colors ${
+                index !== users.length - 1 ? 'border-b border-warm-100' : ''
               }`}
-              style={{ gridTemplateColumns: '180px 220px 200px 300px 110px 100px 100px', minWidth: '1210px' }}
+              style={{ gridTemplateColumns: '180px 220px 200px 300px 110px 110px 80px', minWidth: '1240px' }}
             >
-              {/* User */}
-              <div className="min-w-0">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-slate-200 rounded-full flex items-center justify-center">
-                    <User className="w-4 h-4 text-slate-600" />
-                  </div>
-                  <div>
-                    <p className="font-medium text-slate-950 truncate">
-                      {user.username}
-                    </p>
-                  </div>
+              {/* Avatar + name */}
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-8 h-8 rounded-full bg-rail-100 flex items-center justify-center flex-shrink-0">
+                  <User className="w-4 h-4 text-rail-500" />
                 </div>
+                <p className="font-medium text-rail-900 truncate">{user.username}</p>
               </div>
 
               {/* Email */}
-              <div className="min-w-0">
-                <p className="text-sm text-slate-700 truncate">{user.email}</p>
-              </div>
+              <p className="text-sm text-warm-600 truncate min-w-0">{user.email}</p>
 
               {/* User ID */}
-              <div className="min-w-0">
-                <p className="text-sm text-slate-600 font-mono truncate">{user.userId}</p>
-              </div>
+              <p className="text-sm text-warm-500 font-mono truncate min-w-0">{user.userId}</p>
 
               {/* Supabase ID */}
-              <div className="min-w-0">
-                <p className="text-sm text-slate-600 font-mono truncate">
-                  {user.supabaseId || '-'}
-                </p>
-              </div>
+              <p className="text-sm text-warm-500 font-mono truncate min-w-0">{user.supabaseId || '—'}</p>
 
               {/* Joined */}
-              <div className="text-sm text-slate-600">
-                {formatDate(user.createdAt)}
-              </div>
+              <p className="text-sm text-warm-500">{formatDate(user.createdAt)}</p>
 
-              {/* Status */}
-              <div>
-                <button
-                  onClick={() => toggleUserStatus(user._id, user.username)}
-                  className="flex items-center gap-2 group"
-                >
-                  {user.isActive !== false ? (
-                    <>
-                      <ToggleRight className="w-5 h-5 text-green-600 group-hover:text-green-700" />
-                      <span className="text-xs font-medium text-green-700">Active</span>
-                    </>
-                  ) : (
-                    <>
-                      <ToggleLeft className="w-5 h-5 text-slate-400 group-hover:text-slate-500" />
-                      <span className="text-xs font-medium text-slate-500">Inactive</span>
-                    </>
-                  )}
-                </button>
-              </div>
+              {/* Status toggle */}
+              <button
+                onClick={() => toggleUserStatus(user._id, user.username)}
+                className="flex items-center gap-2 group"
+              >
+                {user.isActive !== false ? (
+                  <>
+                    <ToggleRight className="w-5 h-5 text-emerald-500 group-hover:text-emerald-600" />
+                    <Badge variant="success">Active</Badge>
+                  </>
+                ) : (
+                  <>
+                    <ToggleLeft className="w-5 h-5 text-warm-400 group-hover:text-warm-500" />
+                    <Badge variant="muted">Inactive</Badge>
+                  </>
+                )}
+              </button>
 
               {/* Actions */}
-              <div className="flex justify-end gap-2">
-                <button
+              <div className="flex justify-end">
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
                   onClick={() => handleManageAccess(user)}
-                  className="text-slate-500 hover:text-slate-700 transition-colors p-2 hover:bg-slate-100 rounded"
                   title="Manage Access"
                 >
                   <Settings className="w-4 h-4" />
-                </button>
+                </Button>
               </div>
             </div>
           ))}
         </div>
 
+        {/* Empty state */}
         {users.length === 0 && (
-          <div className="text-center py-12">
-            <User className="w-12 h-12 text-slate-400 mx-auto mb-4" />
-            <p className="text-slate-600 mb-4">No users found</p>
-            <p className="text-sm text-slate-500">Users will appear here once they register on the platform</p>
+          <div className="card py-16 text-center">
+            <div className="w-12 h-12 rounded-full bg-warm-100 flex items-center justify-center mx-auto mb-4">
+              <User className="w-6 h-6 text-warm-400" />
+            </div>
+            <p className="font-semibold text-rail-800 mb-1">No users yet</p>
+            <p className="text-sm text-warm-500">Users will appear here once they register</p>
           </div>
         )}
 
         {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="mt-6 flex items-center justify-between">
-            <div className="text-sm text-slate-600">
-              Showing {((currentPage - 1) * limit) + 1} to {Math.min(currentPage * limit, total)} of {total} users
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage === 1}
-                className="px-3 py-2 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1"
-              >
-                <ChevronLeft className="w-4 h-4" />
-                Previous
-              </button>
-              
-              <div className="flex items-center gap-1">
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
-                  // Show first page, last page, current page, and pages around current
-                  const showPage = 
-                    page === 1 || 
-                    page === totalPages || 
-                    (page >= currentPage - 1 && page <= currentPage + 1)
-                  
-                  const showEllipsis = 
-                    (page === currentPage - 2 && currentPage > 3) ||
-                    (page === currentPage + 2 && currentPage < totalPages - 2)
-
-                  if (showEllipsis) {
-                    return (
-                      <span key={page} className="px-2 text-slate-400">
-                        ...
-                      </span>
-                    )
-                  }
-
-                  if (!showPage) return null
-
-                  return (
-                    <button
-                      key={page}
-                      onClick={() => handlePageChange(page)}
-                      className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                        currentPage === page
-                          ? 'bg-slate-900 text-white'
-                          : 'text-slate-700 hover:bg-slate-100'
-                      }`}
-                    >
-                      {page}
-                    </button>
-                  )
-                })}
-              </div>
-
-              <button
-                onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === totalPages}
-                className="px-3 py-2 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1"
-              >
-                Next
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        )}
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          total={total}
+          limit={limit}
+          onPageChange={(page) => { setCurrentPage(page); setLoading(true) }}
+        />
       </div>
-
-      <ToastContainer toasts={toast.toasts} onRemove={toast.removeToast} />
     </div>
   )
 }

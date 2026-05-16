@@ -1,5 +1,7 @@
 'use client'
 
+import { Button } from '@/components/ui/button'
+
 interface PageHeaderProps {
   title: string
   subtitle?: string | React.ReactNode
@@ -28,16 +30,16 @@ export function PageHeader({ title, subtitle, action }: PageHeaderProps) {
         </div>
 
         {action && (
-          <button
+          <Button
+            variant="primary"
+            size="sm"
             onClick={action.onClick}
             disabled={action.disabled}
-            className={`btn-minimal-primary flex-shrink-0 ${
-              action.disabled ? 'opacity-50 cursor-not-allowed' : ''
-            }`}
+            className="flex-shrink-0"
           >
             {action.icon && <action.icon className="w-4 h-4" />}
             {action.label}
-          </button>
+          </Button>
         )}
       </div>
 

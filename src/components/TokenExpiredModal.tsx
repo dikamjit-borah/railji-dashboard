@@ -1,63 +1,59 @@
-'use client';
+'use client'
 
-import { useEffect } from 'react';
+import { Button } from './ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from './ui/dialog'
 
 interface TokenExpiredModalProps {
-  isOpen: boolean;
-  onSignInAgain: () => void;
+  isOpen: boolean
+  onSignInAgain: () => void
 }
 
 export default function TokenExpiredModal({ isOpen, onSignInAgain }: TokenExpiredModalProps) {
-  useEffect(() => {
-    if (isOpen) {
-      // Prevent scrolling when modal is open
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
-    }
-
-    return () => {
-      document.body.style.overflow = 'unset';
-    };
-  }, [isOpen]);
-
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900 bg-opacity-50">
-      {/* Modal */}
-      <div className="relative bg-white border border-slate-200 max-w-md w-full mx-4 p-8">
-        <div className="text-center">
-          {/* Railway-inspired icon */}
-          <div className="mx-auto flex items-center justify-center w-12 h-12 mb-6">
-            <div className="w-10 h-10 bg-slate-900 flex items-center justify-center">
-              <div className="w-1.5 h-5 bg-slate-50 mr-1"></div>
-              <div className="w-1.5 h-5 bg-slate-50"></div>
+    <Dialog open={isOpen} onOpenChange={() => {}}>
+      <DialogContent showClose={false}>
+        {/* Railway logo */}
+        <div className="flex justify-center mb-2">
+          <div
+            className="w-11 h-11 rounded-xl flex items-center justify-center"
+            style={{ backgroundColor: '#162254' }}
+          >
+            <div className="flex gap-[5px]">
+              {[0, 1].map(c => (
+                <div key={c} className="flex flex-col justify-between h-[18px]">
+                  {[0, 1, 2].map(r => (
+                    <div
+                      key={r}
+                      className="w-[3px] h-[3px] rounded-full"
+                      style={{ backgroundColor: r === 1 ? '#FBBF24' : '#F59E0B' }}
+                    />
+                  ))}
+                </div>
+              ))}
             </div>
           </div>
-          
-          {/* Title */}
-          <h3 className="text-lg font-semibold text-slate-950 mb-2">
-            Session Expired
-          </h3>
-          
-          {/* Track divider */}
-          <div className="track my-4"></div>
-          
-          {/* Message */}
-          <p className="text-sm text-slate-600 mb-6 leading-relaxed">
-            Your session has expired for security reasons. Please sign in again to continue using the dashboard.
-          </p>
-          
-          {/* Button */}
-          <button
-            onClick={onSignInAgain}
-            className="w-full py-2.5 px-4 border border-slate-900 text-sm font-medium text-slate-50 bg-slate-900 hover:bg-slate-800 transition-colors"
-          >
-            Sign In Again
-          </button>
         </div>
-      </div>
-    </div>
-  );
+
+        <DialogHeader>
+          <DialogTitle className="text-center">Session Expired</DialogTitle>
+          <DialogDescription className="text-center">
+            Your session has expired for security reasons. Please sign in again to continue using the dashboard.
+          </DialogDescription>
+        </DialogHeader>
+
+        <DialogFooter className="border-0 mt-4 pt-0">
+          <Button variant="primary" size="lg" className="w-full" onClick={onSignInAgain}>
+            Sign In Again
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
 }

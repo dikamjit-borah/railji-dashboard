@@ -1,8 +1,11 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { ChevronDown, ChevronRight, ChevronLeft, Loader2, AlertCircle, ToggleLeft, ToggleRight, Trash2 } from 'lucide-react'
-import { ToastContainer, useToast } from './Toast'
+import { ChevronDown, ChevronRight, Loader2, AlertCircle, ToggleLeft, ToggleRight, Trash2 } from 'lucide-react'
+import { toast } from 'sonner'
+import { Button } from './ui/button'
+import { Badge } from './ui/badge'
+import { Pagination } from './ui/pagination'
 import { API_ENDPOINTS } from '@/lib/api'
 import { apiClient, getErrorMessage } from '@/lib/api-client'
 
@@ -57,7 +60,7 @@ export function DepartmentPapersList({
   onTogglePaperAccess,
   onDeletePaper,
   onTogglePaperStatus,
-  onViewPaper
+  onViewPaper,
 }: DepartmentPapersListProps) {
   const [allDepartments, setAllDepartments] = useState<Department[]>([])
   const [papersByDept, setPapersByDept] = useState<Record<string, Paper[]>>({})
@@ -69,7 +72,6 @@ export function DepartmentPapersList({
   const [error, setError] = useState<string | null>(null)
   const [togglingItem, setTogglingItem] = useState<string | null>(null)
   const hasFetched = useRef(false)
-  const toast = useToast()
 
   useEffect(() => {
     if (!hasFetched.current) {
@@ -82,34 +84,22 @@ export function DepartmentPapersList({
     setLoadingDepts(true)
     setError(null)
     try {
-      // Use different endpoint based on mode
       const url = mode === 'access' && userId
         ? API_ENDPOINTS.userDepartments(userId)
         : API_ENDPOINTS.departments
-      
       const result = await apiClient.get(url)
       if (!result.success) throw new Error(getErrorMessage(result))
-      
-      let depts: Department[] = []
-      if (Array.isArray(result.data)) {
-        depts = result.data
-      }
-      
+      const depts: Department[] = Array.isArray(result.data) ? result.data : []
       const generalDept: Department = {
         departmentId: 'GENERAL',
         name: 'General Papers',
-        description: 'Common papers across all departments'
+        description: 'Common papers across all departments',
       }
-      
       const allDepts = [generalDept, ...depts]
       setAllDepartments(allDepts)
-      
       allDepts.forEach(dept => {
-        if (dept.departmentId === 'GENERAL') {
-          fetchGeneralPapers(1)
-        } else {
-          fetchPapersForDept(dept.departmentId, 1)
-        }
+        if (dept.departmentId === 'GENERAL') fetchGeneralPapers(1)
+        else fetchPapersForDept(dept.departmentId, 1)
       })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load departments')
@@ -118,100 +108,60 @@ export function DepartmentPapersList({
     }
   }
 
-  const fetchPapersForDept = async (deptId: string, page: number = 1) => {
+  const fetchPapersForDept = async (deptId: string, page = 1) => {
     setLoadingPapers(prev => new Set(prev).add(deptId))
     try {
-      // Use different endpoint based on mode
-      let url: string
-      if (mode === 'access' && userId) {
-        url = API_ENDPOINTS.userPapers(userId, deptId, page)
-      } else {
-        url = API_ENDPOINTS.papers(deptId, page)
-      }
-      
+      const url = mode === 'access' && userId
+        ? API_ENDPOINTS.userPapers(userId, deptId, page)
+        : API_ENDPOINTS.papers(deptId, page)
       const result = await apiClient.get(url)
       if (!result.success) throw new Error(getErrorMessage(result))
-      
-      let papers: Paper[] = []
-      let pagination: PaginationInfo | null = null
-      
-      if (result.data && result.data.papers && Array.isArray(result.data.papers)) {
-        papers = result.data.papers
-        pagination = result.data.pagination
-      }
-      
+      const papers: Paper[] = result.data?.papers ?? []
+      const pagination: PaginationInfo | null = result.data?.pagination ?? null
       setPapersByDept(prev => ({ ...prev, [deptId]: papers }))
-      if (pagination) {
-        setPaginationByDept(prev => ({ ...prev, [deptId]: pagination }))
-      }
+      if (pagination) setPaginationByDept(prev => ({ ...prev, [deptId]: pagination }))
       setCurrentPageByDept(prev => ({ ...prev, [deptId]: page }))
     } catch (err) {
       console.error(`Failed to load papers for ${deptId}:`, err)
       setPapersByDept(prev => ({ ...prev, [deptId]: [] }))
     } finally {
-      setLoadingPapers(prev => {
-        const next = new Set(prev)
-        next.delete(deptId)
-        return next
-      })
+      setLoadingPapers(prev => { const n = new Set(prev); n.delete(deptId); return n })
     }
   }
 
-  const fetchGeneralPapers = async (page: number = 1) => {
+  const fetchGeneralPapers = async (page = 1) => {
     const deptId = 'GENERAL'
     setLoadingPapers(prev => new Set(prev).add(deptId))
     try {
-      // Use different endpoint based on mode
-      let url: string
-      if (mode === 'access' && userId) {
-        url = API_ENDPOINTS.userGeneralPapers(userId, page)
-      } else {
-        url = API_ENDPOINTS.generalPapers(page)
-      }
-      
+      const url = mode === 'access' && userId
+        ? API_ENDPOINTS.userGeneralPapers(userId, page)
+        : API_ENDPOINTS.generalPapers(page)
       const result = await apiClient.get(url)
       if (!result.success) throw new Error(getErrorMessage(result))
-      
-      let papers: Paper[] = []
-      let pagination: PaginationInfo | null = null
-      
-      if (result.data && result.data.papers && Array.isArray(result.data.papers)) {
-        papers = result.data.papers
-        pagination = result.data.pagination
-      }
-      
+      const papers: Paper[] = result.data?.papers ?? []
+      const pagination: PaginationInfo | null = result.data?.pagination ?? null
       setPapersByDept(prev => ({ ...prev, [deptId]: papers }))
-      if (pagination) {
-        setPaginationByDept(prev => ({ ...prev, [deptId]: pagination }))
-      }
+      if (pagination) setPaginationByDept(prev => ({ ...prev, [deptId]: pagination }))
       setCurrentPageByDept(prev => ({ ...prev, [deptId]: page }))
     } catch (err) {
-      console.error(`Failed to load general papers:`, err)
+      console.error('Failed to load general papers:', err)
       setPapersByDept(prev => ({ ...prev, [deptId]: [] }))
     } finally {
-      setLoadingPapers(prev => {
-        const next = new Set(prev)
-        next.delete(deptId)
-        return next
-      })
+      setLoadingPapers(prev => { const n = new Set(prev); n.delete(deptId); return n })
     }
   }
 
   const toggleDepartment = (deptId: string) => {
-    const newExpanded = new Set(expandedDepts)
-    if (newExpanded.has(deptId)) {
-      newExpanded.delete(deptId)
+    const next = new Set(expandedDepts)
+    if (next.has(deptId)) {
+      next.delete(deptId)
     } else {
-      newExpanded.add(deptId)
+      next.add(deptId)
       if (!papersByDept[deptId]) {
-        if (deptId === 'GENERAL') {
-          fetchGeneralPapers(1)
-        } else {
-          fetchPapersForDept(deptId, 1)
-        }
+        deptId === 'GENERAL' ? fetchGeneralPapers(1) : fetchPapersForDept(deptId, 1)
       }
     }
-    setExpandedDepts(newExpanded)
+    setExpandedDepts(next)
   }
 
   const handleToggleDepartment = async (deptId: string, deptName: string, hasAccess: boolean) => {
@@ -222,7 +172,10 @@ export function DepartmentPapersList({
     }
   }
 
-  const handleTogglePaper = async (paperId: string, paperTitle: string, deptId: string, hasAccess: boolean, currentStatus?: boolean) => {
+  const handleTogglePaper = async (
+    paperId: string, paperTitle: string, deptId: string,
+    hasAccess: boolean, currentStatus?: boolean,
+  ) => {
     if (mode === 'access' && onTogglePaperAccess) {
       setTogglingItem(`paper-${paperId}`)
       await onTogglePaperAccess(paperId, paperTitle, hasAccess)
@@ -235,301 +188,222 @@ export function DepartmentPapersList({
   }
 
   const handlePageChange = (deptId: string, newPage: number) => {
-    if (deptId === 'GENERAL') {
-      fetchGeneralPapers(newPage)
-    } else {
-      fetchPapersForDept(deptId, newPage)
-    }
+    deptId === 'GENERAL' ? fetchGeneralPapers(newPage) : fetchPapersForDept(deptId, newPage)
   }
 
+  /* ── Loading / Error states ── */
   if (loadingDepts) {
     return (
-      <div className="px-4 md:px-8 py-12 flex items-center justify-center">
-        <Loader2 className="w-6 h-6 animate-spin text-slate-400" />
+      <div className="py-16 flex items-center justify-center">
+        <Loader2 className="w-6 h-6 animate-spin text-warm-400" />
       </div>
     )
   }
 
   if (error) {
     return (
-      <div className="px-4 md:px-8 py-12">
-        <div className="bg-red-50 border border-red-200 rounded p-4 flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-          <div>
-            <p className="text-sm font-medium text-red-900">Error loading departments</p>
-            <p className="text-sm text-red-700 mt-1">{error}</p>
-            <button
-              onClick={fetchDepartments}
-              className="text-sm text-red-700 underline mt-2 hover:text-red-900"
-            >
-              Try again
-            </button>
-          </div>
+      <div className="card p-5 flex items-start gap-3 border-red-200 bg-red-50">
+        <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+        <div>
+          <p className="text-sm font-semibold text-red-800">Error loading departments</p>
+          <p className="text-sm text-red-600 mt-0.5">{error}</p>
+          <Button variant="ghost" size="sm" onClick={fetchDepartments} className="mt-2 text-red-600 hover:text-red-800 hover:bg-red-100 px-0">
+            Try again
+          </Button>
         </div>
       </div>
     )
   }
 
-  const totalPapers = Object.values(paginationByDept).reduce((sum, pagination) => sum + pagination.total, 0)
+  const totalPapers = Object.values(paginationByDept).reduce((s, p) => s + p.total, 0)
 
   return (
-    <>
+    <div className="space-y-3">
+      {/* Summary card (manage mode) */}
       {mode === 'manage' && (
-        <div className="mb-6 bg-white border border-slate-200 px-6 py-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-medium text-slate-950">Total Papers</h2>
-            <span className="text-2xl font-semibold text-slate-950">{totalPapers}</span>
-          </div>
+        <div className="card px-6 py-4 flex items-center justify-between">
+          <p className="text-sm font-medium text-warm-600">Total Papers</p>
+          <span className="text-2xl font-bold text-rail-900">{totalPapers}</span>
         </div>
       )}
 
-      <div className="space-y-3">
-        {allDepartments.map((dept) => {
-          const isExpanded = expandedDepts.has(dept.departmentId)
-          const papers = papersByDept[dept.departmentId] || []
-          const isLoadingPapers = loadingPapers.has(dept.departmentId)
-          const pagination = paginationByDept[dept.departmentId]
-          const currentPage = currentPageByDept[dept.departmentId] || 1
-          const hasAccess = mode === 'access' && (dept.hasAccess || userDepartments.includes(dept.departmentId))
-          const hasDepartmentAccess = hasAccess // Store for paper-level checks
+      {/* Department list */}
+      {allDepartments.map(dept => {
+        const isExpanded = expandedDepts.has(dept.departmentId)
+        const papers = papersByDept[dept.departmentId] ?? []
+        const isLoadingPapers = loadingPapers.has(dept.departmentId)
+        const pagination = paginationByDept[dept.departmentId]
+        const currentPage = currentPageByDept[dept.departmentId] ?? 1
+        const hasAccess = mode === 'access' && (dept.hasAccess || userDepartments.includes(dept.departmentId))
 
-          return (
-            <div key={dept.departmentId} className="bg-white border border-slate-200 overflow-hidden">
-              <div
-                className="w-full px-6 py-4 flex items-center justify-between bg-slate-50 hover:bg-slate-100 transition-colors"
+        return (
+          <div key={dept.departmentId} className="card overflow-hidden">
+            {/* Department header */}
+            <div className="flex items-center justify-between px-5 py-4 bg-warm-50 border-b border-warm-100 hover:bg-warm-100 transition-colors">
+              <button
+                onClick={() => toggleDepartment(dept.departmentId)}
+                className="flex items-center gap-3 flex-1 text-left"
               >
-                <button
-                  onClick={() => toggleDepartment(dept.departmentId)}
-                  className="flex items-center gap-3 flex-1 text-left"
-                >
-                  {isExpanded ? (
-                    <ChevronDown className="w-5 h-5 text-slate-600" />
-                  ) : (
-                    <ChevronRight className="w-5 h-5 text-slate-600" />
-                  )}
-                  <div className="text-left">
-                    <h3 className="font-medium text-slate-950">{dept.name}</h3>
-                    {dept.description && (
-                      <p className="text-sm text-slate-600 mt-0.5">{dept.description}</p>
-                    )}
-                  </div>
-                </button>
-                <div className="flex items-center gap-3">
-                  <span className="text-xs text-slate-500 bg-slate-200 px-2 py-1 rounded">
-                    {isLoadingPapers ? (
-                      <Loader2 className="w-3 h-3 animate-spin inline" />
-                    ) : pagination ? (
-                      `${pagination.total} ${pagination.total === 1 ? 'paper' : 'papers'}`
-                    ) : (
-                      `${papers.length} ${papers.length === 1 ? 'paper' : 'papers'}`
-                    )}
-                  </span>
-                  {mode === 'access' && onToggleDepartmentAccess && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleToggleDepartment(dept.departmentId, dept.name, hasAccess)
-                      }}
-                      disabled={togglingItem === `dept-${dept.departmentId}`}
-                      className={`transition-colors p-1.5 disabled:opacity-50 ${
-                        hasAccess 
-                          ? 'text-green-600 hover:text-green-700' 
-                          : 'text-slate-400 hover:text-slate-600'
-                      }`}
-                      title={hasAccess ? 'Remove department access' : 'Grant department access'}
-                    >
-                      {togglingItem === `dept-${dept.departmentId}` ? (
-                        <Loader2 className="w-5 h-5 animate-spin" />
-                      ) : hasAccess ? (
-                        <ToggleRight className="w-6 h-6" />
-                      ) : (
-                        <ToggleLeft className="w-6 h-6" />
-                      )}
-                    </button>
+                {isExpanded
+                  ? <ChevronDown className="w-4 h-4 text-warm-500 flex-shrink-0" />
+                  : <ChevronRight className="w-4 h-4 text-warm-500 flex-shrink-0" />
+                }
+                <div>
+                  <p className="font-semibold text-rail-900">{dept.name}</p>
+                  {dept.description && (
+                    <p className="text-xs text-warm-500 mt-0.5">{dept.description}</p>
                   )}
                 </div>
-              </div>
+              </button>
 
-              {isExpanded && (
-                <div className="border-t border-slate-200">
-                  {isLoadingPapers ? (
-                    <div className="px-6 py-8 flex items-center justify-center">
-                      <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
-                    </div>
-                  ) : papers.length === 0 ? (
-                    <div className="px-6 py-8 text-center text-sm text-slate-500">
-                      No papers found in this department
-                    </div>
-                  ) : (
-                    <>
-                      <div className="divide-y divide-slate-100">
-                      {papers.map((paper) => {
+              <div className="flex items-center gap-3">
+                <Badge variant="muted">
+                  {isLoadingPapers
+                    ? <Loader2 className="w-3 h-3 animate-spin" />
+                    : `${pagination?.total ?? papers.length} papers`
+                  }
+                </Badge>
+
+                {mode === 'access' && onToggleDepartmentAccess && (
+                  <button
+                    onClick={e => { e.stopPropagation(); handleToggleDepartment(dept.departmentId, dept.name, hasAccess) }}
+                    disabled={togglingItem === `dept-${dept.departmentId}`}
+                    className={`p-1 transition-colors disabled:opacity-50 ${hasAccess ? 'text-emerald-500 hover:text-emerald-600' : 'text-warm-400 hover:text-warm-600'}`}
+                    title={hasAccess ? 'Remove access' : 'Grant access'}
+                  >
+                    {togglingItem === `dept-${dept.departmentId}`
+                      ? <Loader2 className="w-5 h-5 animate-spin" />
+                      : hasAccess ? <ToggleRight className="w-6 h-6" /> : <ToggleLeft className="w-6 h-6" />
+                    }
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Papers list */}
+            {isExpanded && (
+              <div>
+                {isLoadingPapers ? (
+                  <div className="py-10 flex items-center justify-center">
+                    <Loader2 className="w-5 h-5 animate-spin text-warm-400" />
+                  </div>
+                ) : papers.length === 0 ? (
+                  <p className="px-6 py-8 text-center text-sm text-warm-400">No papers in this department</p>
+                ) : (
+                  <>
+                    <div className="divide-y divide-warm-100">
+                      {papers.map(paper => {
                         const hasPaperAccess = mode === 'access' && (paper.hasAccess || userPapers.includes(paper.paperId))
-                        const isPaperToggleDisabled = mode === 'access' && (hasDepartmentAccess || paper.isFree) // Disable if department has access or paper is free
-                        
+                        const deptHasAccess = mode === 'access' && (dept.hasAccess || userDepartments.includes(dept.departmentId))
+                        const isPaperToggleDisabled = mode === 'access' && (deptHasAccess || paper.isFree)
+
                         return (
-                          <div
-                            key={paper._id}
-                            className="px-6 py-4 hover:bg-slate-50 transition-colors flex items-center justify-between group"
-                          >
+                          <div key={paper._id} className="px-5 py-3.5 hover:bg-warm-50 transition-colors flex items-center justify-between gap-4">
                             <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2">
-                                <h4 className="font-medium text-slate-950 truncate">{paper.name}</h4>
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <p className="font-medium text-rail-900 truncate">{paper.name}</p>
                                 {paper.paperType && (
-                                  <span className="text-xs capitalize bg-blue-100 text-blue-800 px-2 py-0.5 rounded">
-                                    {paper.paperType}
-                                  </span>
+                                  <Badge variant="rail">{paper.paperType}</Badge>
                                 )}
                                 {paper.paperCode && (
-                                  <span className="text-xs bg-slate-100 text-slate-700 px-2 py-0.5 rounded">
-                                    {paper.paperCode}
-                                  </span>
+                                  <Badge variant="default">{paper.paperCode}</Badge>
+                                )}
+                                {paper.isFree && (
+                                  <Badge variant="free">Free</Badge>
                                 )}
                               </div>
-                              <div className="flex items-center gap-4 mt-2 text-xs text-slate-500">
-                                {paper.createdAt && (
-                                  <span>Created {new Date(paper.createdAt).toLocaleDateString()}</span>
-                                )}
-                                {paper.updatedAt && (
-                                  <span>Updated {new Date(paper.updatedAt).toLocaleDateString()}</span>
-                                )}
+                              <div className="flex items-center gap-4 mt-1 text-xs text-warm-400">
+                                {paper.createdAt && <span>Created {new Date(paper.createdAt).toLocaleDateString()}</span>}
+                                {paper.updatedAt && <span>Updated {new Date(paper.updatedAt).toLocaleDateString()}</span>}
                               </div>
                             </div>
-                            <div className="flex items-center gap-2 ml-4">
+
+                            <div className="flex items-center gap-1.5 flex-shrink-0">
                               {mode === 'manage' && (
                                 <>
                                   {onViewPaper && (
-                                    <button
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
                                       onClick={() => onViewPaper(paper.paperId, paper.departmentId)}
-                                      className="text-sm text-slate-600 hover:text-slate-950 transition-colors px-3 py-1.5 border border-slate-300 hover:border-slate-400"
                                     >
-                                      View Details
-                                    </button>
+                                      View
+                                    </Button>
                                   )}
                                   {onTogglePaperStatus && (
                                     <button
                                       onClick={() => handleTogglePaper(paper.paperId, paper.name, dept.departmentId, false, paper.isActive)}
                                       disabled={togglingItem === `paper-${paper.paperId}`}
-                                      className={`transition-colors p-1.5 disabled:opacity-50 ${
-                                        paper.isActive !== false 
-                                          ? 'text-green-600 hover:text-green-700' 
-                                          : 'text-slate-400 hover:text-slate-600'
-                                      }`}
-                                      title={paper.isActive !== false ? 'Deactivate paper' : 'Activate paper'}
+                                      className={`p-1.5 rounded-lg transition-colors disabled:opacity-50 ${paper.isActive !== false ? 'text-emerald-500 hover:text-emerald-600 hover:bg-emerald-50' : 'text-warm-400 hover:text-warm-600 hover:bg-warm-100'}`}
+                                      title={paper.isActive !== false ? 'Deactivate' : 'Activate'}
                                     >
-                                      {togglingItem === `paper-${paper.paperId}` ? (
-                                        <Loader2 className="w-4 h-4 animate-spin" />
-                                      ) : paper.isActive !== false ? (
-                                        <ToggleRight className="w-5 h-5" />
-                                      ) : (
-                                        <ToggleLeft className="w-5 h-5" />
-                                      )}
+                                      {togglingItem === `paper-${paper.paperId}`
+                                        ? <Loader2 className="w-4 h-4 animate-spin" />
+                                        : paper.isActive !== false
+                                          ? <ToggleRight className="w-5 h-5" />
+                                          : <ToggleLeft className="w-5 h-5" />
+                                      }
                                     </button>
                                   )}
                                   {onDeletePaper && (
-                                    <button
+                                    <Button
+                                      variant="ghost"
+                                      size="icon-sm"
                                       onClick={() => onDeletePaper(paper.paperId, dept.departmentId)}
-                                      className="text-slate-400 hover:text-red-600 transition-colors p-1.5"
+                                      className="text-warm-400 hover:text-red-500 hover:bg-red-50"
                                       title="Delete paper"
                                     >
                                       <Trash2 className="w-4 h-4" />
-                                    </button>
+                                    </Button>
                                   )}
                                 </>
                               )}
+
                               {mode === 'access' && onTogglePaperAccess && (
                                 <button
                                   onClick={() => !isPaperToggleDisabled && handleTogglePaper(paper.paperId, paper.name, dept.departmentId, hasPaperAccess)}
                                   disabled={togglingItem === `paper-${paper.paperId}` || isPaperToggleDisabled}
-                                  className={`transition-colors p-1.5 disabled:opacity-50 ${
-                                    isPaperToggleDisabled
-                                      ? 'text-slate-300 cursor-not-allowed'
-                                      : hasPaperAccess 
-                                        ? 'text-green-600 hover:text-green-700' 
-                                        : 'text-slate-400 hover:text-slate-600'
-                                  }`}
-                                  title={
-                                    paper.isFree
-                                      ? 'Free papers are accessible to all users'
-                                      : hasDepartmentAccess
-                                        ? 'Cannot modify paper access when department access is granted' 
-                                        : hasPaperAccess 
-                                          ? 'Remove paper access' 
-                                          : 'Grant paper access'
-                                  }
+                                  className={`p-1.5 transition-colors disabled:opacity-40 ${isPaperToggleDisabled ? 'text-warm-300 cursor-not-allowed' : hasPaperAccess ? 'text-emerald-500 hover:text-emerald-600' : 'text-warm-400 hover:text-warm-600'}`}
+                                  title={paper.isFree ? 'Free for all users' : deptHasAccess ? 'Department access overrides paper access' : hasPaperAccess ? 'Remove access' : 'Grant access'}
                                 >
-                                  {togglingItem === `paper-${paper.paperId}` ? (
-                                    <Loader2 className="w-4 h-4 animate-spin" />
-                                  ) : hasPaperAccess || isPaperToggleDisabled ? (
-                                    <ToggleRight className="w-5 h-5" />
-                                  ) : (
-                                    <ToggleLeft className="w-5 h-5" />
-                                  )}
+                                  {togglingItem === `paper-${paper.paperId}`
+                                    ? <Loader2 className="w-4 h-4 animate-spin" />
+                                    : (hasPaperAccess || isPaperToggleDisabled)
+                                      ? <ToggleRight className="w-5 h-5" />
+                                      : <ToggleLeft className="w-5 h-5" />
+                                  }
                                 </button>
                               )}
                             </div>
                           </div>
                         )
                       })}
-                      </div>
+                    </div>
 
-                      {/* Pagination Controls */}
-                      {pagination && pagination.totalPages > 1 && (
-                        <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
-                        <div className="text-sm text-slate-600">
-                          Showing {((currentPage - 1) * pagination.limit) + 1} to {Math.min(currentPage * pagination.limit, pagination.total)} of {pagination.total} papers
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => handlePageChange(dept.departmentId, currentPage - 1)}
-                            disabled={currentPage === 1}
-                            className="px-3 py-1.5 text-sm border border-slate-300 hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1"
-                          >
-                            <ChevronLeft className="w-4 h-4" />
-                            Previous
-                          </button>
-                          <div className="flex items-center gap-1">
-                            {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map((page) => (
-                              <button
-                                key={page}
-                                onClick={() => handlePageChange(dept.departmentId, page)}
-                                className={`px-3 py-1.5 text-sm border transition-colors ${
-                                  page === currentPage
-                                    ? 'bg-slate-950 text-white border-slate-950'
-                                    : 'border-slate-300 hover:bg-white'
-                                }`}
-                              >
-                                {page}
-                              </button>
-                            ))}
-                          </div>
-                          <button
-                            onClick={() => handlePageChange(dept.departmentId, currentPage + 1)}
-                            disabled={currentPage === pagination.totalPages}
-                            className="px-3 py-1.5 text-sm border border-slate-300 hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1"
-                          >
-                            Next
-                            <ChevronRight className="w-4 h-4" />
-                          </button>
-                        </div>
+                    {pagination && pagination.totalPages > 1 && (
+                      <div className="px-5 py-3 border-t border-warm-100 bg-warm-50">
+                        <Pagination
+                          currentPage={currentPage}
+                          totalPages={pagination.totalPages}
+                          total={pagination.total}
+                          limit={pagination.limit}
+                          onPageChange={(page) => handlePageChange(dept.departmentId, page)}
+                        />
                       </div>
-                      )}
-                    </>
-                  )}
-                </div>
-              )}
-            </div>
-          )
-        })}
-      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+        )
+      })}
 
       {allDepartments.length === 0 && (
-        <div className="text-center py-12">
-          <p className="text-slate-600">No departments found</p>
+        <div className="card py-12 text-center">
+          <p className="text-warm-500">No departments found</p>
         </div>
       )}
-
-      <ToastContainer toasts={toast.toasts} onRemove={toast.removeToast} />
-    </>
+    </div>
   )
 }

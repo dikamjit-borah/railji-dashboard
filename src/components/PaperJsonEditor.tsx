@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import { ArrowLeft, Plus, Trash2, Copy, Check } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 
 interface Question {
   id?: number
@@ -277,23 +278,20 @@ export function PaperJsonEditor({
   const getCurrentData = useCallback(() => originalData, [originalData])
 
   return (
-    <div className="fixed inset-0 ml-56 bg-slate-50 flex flex-col">
+    <div className="fixed inset-x-0 bottom-0 top-14 md:ml-60 bg-warm-50 flex flex-col">
       {/* Header */}
-      <div className="bg-white border-b border-slate-200">
+      <div className="bg-white border-b border-warm-200">
         <div className="px-8 py-6 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <button
-              onClick={onBack}
-              className="p-2 hover:bg-slate-200 rounded-lg transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5 text-slate-600" />
-            </button>
+            <Button variant="ghost" size="icon" onClick={onBack}>
+              <ArrowLeft className="w-5 h-5 text-warm-500" />
+            </Button>
             <div>
-              <h1 className="text-2xl font-bold text-slate-950">Paper Editor</h1>
-              <p className="text-sm text-slate-600 mt-1">
+              <h1 className="text-2xl font-bold text-rail-900">Paper Editor</h1>
+              <p className="text-sm text-warm-500 mt-1">
                 {fileName ? (
                   <>
-                    File: <span className="font-semibold text-slate-950 bg-yellow-100 px-2 py-0.5 rounded">{fileName}</span>
+                    File: <span className="font-semibold text-rail-900 bg-yellow-100 px-2 py-0.5 rounded">{fileName}</span>
                   </>
                 ) : (
                   'Edit paper questions and answers in JSON format'
@@ -302,36 +300,16 @@ export function PaperJsonEditor({
             </div>
           </div>
           <div className="flex gap-2">
-            <button
-              onClick={copyToClipboard}
-              className="flex items-center gap-2 px-4 py-2 bg-slate-200 hover:bg-slate-300 rounded-lg text-slate-950 font-medium transition-colors"
-            >
-              {copied ? (
-                <>
-                  <Check className="w-4 h-4" />
-                  Copied!
-                </>
-              ) : (
-                <>
-                  <Copy className="w-4 h-4" />
-                  Copy JSON
-                </>
-              )}
-            </button>
-            <button
-              onClick={addQuestion}
-              className="flex items-center gap-2 px-4 py-2 bg-slate-950 hover:bg-slate-800 text-white rounded-lg font-medium transition-colors"
-            >
-              <Plus className="w-4 h-4" />
-              Add Question
-            </button>
+            <Button variant="outline" size="sm" onClick={copyToClipboard}>
+              {copied ? <><Check className="w-4 h-4" />Copied!</> : <><Copy className="w-4 h-4" />Copy JSON</>}
+            </Button>
+            <Button variant="secondary" size="sm" onClick={addQuestion}>
+              <Plus className="w-4 h-4" />Add Question
+            </Button>
             {onNext && (
-              <button
-                onClick={() => onNext(getCurrentData())}
-                className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors"
-              >
+              <Button variant="primary" size="sm" onClick={() => onNext(getCurrentData())}>
                 Next: Paper Details →
-              </button>
+              </Button>
             )}
           </div>
         </div>
@@ -340,45 +318,45 @@ export function PaperJsonEditor({
       {/* Main Content */}
       <div className="flex flex-1 overflow-hidden">
         {/* Questions List */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-3 border-r border-slate-200">
+        <div className="flex-1 overflow-y-auto p-4 space-y-3 border-r border-warm-200">
             {questions.map((question, qIndex) => (
               <div
                 key={`q-${qIndex}`}
-                className="bg-white border border-slate-200 rounded-lg overflow-hidden hover:border-slate-300 transition-colors"
+                className="bg-white border border-warm-200 rounded-lg overflow-hidden hover:border-warm-300 transition-colors"
               >
                 <button
                   onClick={() =>
                     setExpandedIndex(expandedIndex === qIndex ? null : qIndex)
                   }
-                  className="w-full p-4 text-left hover:bg-slate-50 transition-colors flex items-start justify-between"
+                  className="w-full p-4 text-left hover:bg-warm-50 transition-colors flex items-start justify-between"
                 >
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-slate-950">
+                    <p className="font-semibold text-rail-900">
                       Q{question.id || qIndex + 1}: {question.question.en}
                     </p>
-                    <p className="font-semibold text-slate-950 text-sm mt-1">
+                    <p className="font-semibold text-rail-900 text-sm mt-1">
                       {question.question.hi}
                     </p>
-                    <p className="text-xs text-slate-600 mt-2">
+                    <p className="text-xs text-warm-500 mt-2">
                       Correct Answer:{' '}
                       <span className="font-medium text-green-700">
                         {String.fromCharCode(65 + question.correct)}
                       </span>
                     </p>
                   </div>
-                  <span className="text-slate-400 ml-4">
+                  <span className="text-warm-400 ml-4">
                     {expandedIndex === qIndex ? '▼' : '▶'}
                   </span>
                 </button>
 
                 {expandedIndex === qIndex && (
-                  <div className="border-t border-slate-200 p-4 bg-slate-50 space-y-4">
+                  <div className="border-t border-warm-200 p-4 bg-warm-50 space-y-4">
                     {/* Question Text */}
                     <div className="space-y-3">
                       <div>
                         <label
                           htmlFor={`ques-${qIndex}`}
-                          className="block text-sm font-semibold text-slate-950 mb-2"
+                          className="block text-sm font-semibold text-rail-900 mb-2"
                         >
                           Question Text (English)
                         </label>
@@ -387,13 +365,13 @@ export function PaperJsonEditor({
                           type="text"
                           defaultValue={question.question.en}
                           onChange={(e) => updateQuestionText(qIndex, 'en', e.target.value)}
-                          className="w-full px-3 py-2 border border-slate-200 rounded-lg text-slate-950 focus:outline-none focus:border-slate-400"
+                          className="w-full px-3 py-2 input-minimal"
                         />
                       </div>
                       <div>
                         <label
                           htmlFor={`ques-hi-${qIndex}`}
-                          className="block text-sm font-semibold text-slate-950 mb-2"
+                          className="block text-sm font-semibold text-rail-900 mb-2"
                         >
                           Question Text (Hindi)
                         </label>
@@ -402,14 +380,14 @@ export function PaperJsonEditor({
                           type="text"
                           defaultValue={question.question.hi}
                           onChange={(e) => updateQuestionText(qIndex, 'hi', e.target.value)}
-                          className="w-full px-3 py-2 border border-slate-200 rounded-lg text-slate-950 focus:outline-none focus:border-slate-400"
+                          className="w-full px-3 py-2 input-minimal"
                         />
                       </div>
                     </div>
 
                     {/* Options */}
                     <div>
-                      <label className="block text-sm font-semibold text-slate-950 mb-3">
+                      <label className="block text-sm font-semibold text-rail-900 mb-3">
                         Options
                       </label>
                       <div className="space-y-3">
@@ -419,11 +397,11 @@ export function PaperJsonEditor({
                             className={`p-3 rounded-lg border ${
                               oIndex === question.correct
                                 ? 'bg-green-50 border-green-300'
-                                : 'bg-white border-slate-200'
+                                : 'bg-white border-warm-200'
                             }`}
                           >
                             <div className="flex items-center gap-3 mb-2">
-                              <span className="text-sm font-semibold text-slate-500 w-6">
+                              <span className="text-sm font-semibold text-warm-400 w-6">
                                 {String.fromCodePoint(65 + oIndex)}.
                               </span>
                               <input
@@ -433,7 +411,7 @@ export function PaperJsonEditor({
                                 onChange={(e) =>
                                   updateOption(qIndex, oIndex, 'en', e.target.value)
                                 }
-                                className="flex-1 px-2 py-1 bg-white border border-slate-200 rounded text-slate-950 text-sm focus:outline-none focus:border-slate-400"
+                                className="flex-1 px-2 py-1 input-minimal text-sm py-1.5"
                               />
                               {oIndex === question.correct && (
                                 <span className="text-xs font-semibold text-green-700 px-2 py-1 bg-green-100 rounded">
@@ -449,7 +427,7 @@ export function PaperJsonEditor({
                                 onChange={(e) =>
                                   updateOption(qIndex, oIndex, 'hi', e.target.value)
                                 }
-                                className="flex-1 px-2 py-1 bg-white border border-slate-200 rounded text-slate-950 text-sm focus:outline-none focus:border-slate-400"
+                                className="flex-1 px-2 py-1 input-minimal text-sm py-1.5"
                               />
                             </div>
                           </div>
@@ -461,7 +439,7 @@ export function PaperJsonEditor({
                     <div>
                       <label
                         htmlFor={`correct-${qIndex}`}
-                        className="block text-sm font-semibold text-slate-950 mb-2"
+                        className="block text-sm font-semibold text-rail-900 mb-2"
                       >
                         Mark Correct Answer
                       </label>
@@ -472,7 +450,7 @@ export function PaperJsonEditor({
                           const selectedIndex = e.target.value.charCodeAt(0) - 65
                           updateQuestion(qIndex, 'correct', selectedIndex)
                         }}
-                        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-slate-950 focus:outline-none focus:border-slate-400"
+                        className="w-full px-3 py-2 input-minimal"
                       >
                         {question.options.map((_, i) => (
                           <option key={`opt-${i}`} value={String.fromCharCode(65 + i)}>
@@ -485,25 +463,22 @@ export function PaperJsonEditor({
                     {/* Details */}
                     <div>
                       <div className="flex items-center justify-between mb-3">
-                        <label className="block text-sm font-semibold text-slate-950">
+                        <label className="block text-sm font-semibold text-rail-900">
                           Details (Optional)
                         </label>
-                        <button
-                          onClick={() => addDetail(qIndex)}
-                          className="text-xs px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded font-medium transition-colors"
-                        >
+                        <Button variant="secondary" size="sm" onClick={() => addDetail(qIndex)}>
                           + Add Detail
-                        </button>
+                        </Button>
                       </div>
                       {question.details.length > 0 ? (
                         <div className="space-y-3">
                           {question.details.map((detail, dIndex) => (
                             <div
                               key={`d-${qIndex}-${dIndex}`}
-                              className="p-3 rounded-lg border bg-blue-50 border-blue-200"
+                              className="p-3 rounded-lg border bg-warm-50 border-warm-200"
                             >
                               <div className="flex items-center gap-3 mb-2">
-                                <span className="text-sm font-semibold text-slate-500 w-6">
+                                <span className="text-sm font-semibold text-warm-400 w-6">
                                   {dIndex + 1}.
                                 </span>
                                 <input
@@ -513,15 +488,11 @@ export function PaperJsonEditor({
                                   onChange={(e) =>
                                     updateDetail(qIndex, dIndex, 'en', e.target.value)
                                   }
-                                  className="flex-1 px-2 py-1 bg-white border border-slate-200 rounded text-slate-950 text-sm focus:outline-none focus:border-slate-400"
+                                  className="flex-1 px-2 py-1 input-minimal text-sm py-1.5"
                                 />
-                                <button
-                                  onClick={() => deleteDetail(qIndex, dIndex)}
-                                  className="p-1 hover:bg-red-100 rounded text-red-600 transition-colors"
-                                  title="Delete detail"
-                                >
+                                <Button variant="ghost" size="icon-sm" onClick={() => deleteDetail(qIndex, dIndex)} title="Delete detail" className="text-red-500 hover:text-red-700 hover:bg-red-50">
                                   <Trash2 className="w-4 h-4" />
-                                </button>
+                                </Button>
                               </div>
                               <div className="flex items-center gap-3 ml-8">
                                 <input
@@ -531,56 +502,47 @@ export function PaperJsonEditor({
                                   onChange={(e) =>
                                     updateDetail(qIndex, dIndex, 'hi', e.target.value)
                                   }
-                                  className="flex-1 px-2 py-1 bg-white border border-slate-200 rounded text-slate-950 text-sm focus:outline-none focus:border-slate-400"
+                                  className="flex-1 px-2 py-1 input-minimal text-sm py-1.5"
                                 />
                               </div>
                             </div>
                           ))}
                         </div>
                       ) : (
-                        <p className="text-xs text-slate-500 italic">No details added</p>
+                        <p className="text-xs text-warm-400 italic">No details added</p>
                       )}
                     </div>
 
                     {/* Delete Button */}
-                    <button
-                      onClick={() => deleteQuestion(qIndex)}
-                      className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-red-50 hover:bg-red-100 text-red-700 rounded-lg font-medium transition-colors"
-                    >
+                    <Button variant="ghost" size="sm" className="w-full text-red-600 hover:text-red-700 hover:bg-red-50" onClick={() => deleteQuestion(qIndex)}>
                       <Trash2 className="w-4 h-4" />
                       Delete Question
-                    </button>
+                    </Button>
                   </div>
                 )}
               </div>
             ))}
 
             {questions.length === 0 && (
-              <div className="text-center py-12 bg-white border border-dashed border-slate-300 rounded-lg">
-                <p className="text-slate-600">No questions added yet</p>
-                <button
-                  onClick={addQuestion}
-                  className="mt-4 px-4 py-2 bg-slate-950 hover:bg-slate-800 text-white rounded-lg font-medium transition-colors"
-                >
+              <div className="text-center py-12 bg-white border border-dashed border-warm-300 rounded-lg">
+                <p className="text-warm-500">No questions added yet</p>
+                <Button variant="primary" size="sm" className="mt-4" onClick={addQuestion}>
                   Add First Question
-                </button>
+                </Button>
               </div>
             )}
         </div>
 
         {/* JSON Preview */}
-        <div className="w-1/3 bg-white border-l border-slate-200 p-4 flex flex-col overflow-hidden">
+        <div className="w-1/3 bg-white border-l border-warm-200 p-4 flex flex-col overflow-hidden">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-slate-950">
+            <h3 className="text-sm font-semibold text-rail-900">
               JSON Preview {!allowJsonEdit && '(Read-only)'}
             </h3>
             {allowJsonEdit && !jsonEditMode && (
-              <button
-                onClick={() => setJsonEditMode(true)}
-                className="text-xs px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded font-medium transition-colors"
-              >
+              <Button variant="secondary" size="sm" onClick={() => setJsonEditMode(true)}>
                 Edit JSON
-              </button>
+              </Button>
             )}
           </div>
           {jsonError && (
@@ -592,43 +554,23 @@ export function PaperJsonEditor({
             value={jsonText}
             onChange={(e) => setJsonText(e.target.value)}
             readOnly={!jsonEditMode}
-            className={`bg-slate-900 rounded-lg p-3 overflow-auto flex-1 text-xs font-mono text-slate-100 resize-none focus:outline-none ${
-              jsonEditMode ? 'border-2 border-blue-500' : ''
+            className={`bg-rail-950 rounded-lg p-3 overflow-auto flex-1 text-xs font-mono text-warm-100 resize-none focus:outline-none ${
+              jsonEditMode ? 'border-2 border-amber-400' : ''
             }`}
           />
           {jsonEditMode ? (
             <div className="flex gap-2 mt-3">
-              <button
-                onClick={applyJsonChanges}
-                className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors text-xs"
-              >
-                <Check className="w-4 h-4" />
-                Apply Changes
-              </button>
-              <button
-                onClick={cancelJsonEdit}
-                className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-slate-200 hover:bg-slate-300 text-slate-950 rounded-lg font-medium transition-colors text-xs"
-              >
+              <Button variant="primary" size="sm" className="flex-1" onClick={applyJsonChanges}>
+                <Check className="w-4 h-4" />Apply Changes
+              </Button>
+              <Button variant="ghost" size="sm" className="flex-1" onClick={cancelJsonEdit}>
                 Cancel
-              </button>
+              </Button>
             </div>
           ) : (
-            <button
-              onClick={copyToClipboard}
-              className="w-full mt-3 flex items-center justify-center gap-2 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-950 rounded-lg font-medium transition-colors text-xs"
-            >
-              {copied ? (
-                <>
-                  <Check className="w-4 h-4" />
-                  Copied!
-                </>
-              ) : (
-                <>
-                  <Copy className="w-4 h-4" />
-                  Copy JSON
-                </>
-              )}
-            </button>
+            <Button variant="outline" size="sm" className="w-full mt-3" onClick={copyToClipboard}>
+              {copied ? <><Check className="w-4 h-4" />Copied!</> : <><Copy className="w-4 h-4" />Copy JSON</>}
+            </Button>
           )}
         </div>
       </div>
