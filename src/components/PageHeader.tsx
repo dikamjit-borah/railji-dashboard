@@ -1,8 +1,5 @@
 'use client'
 
-import { Menu } from 'lucide-react'
-import { useMenu } from './LayoutWrapper'
-
 interface PageHeaderProps {
   title: string
   subtitle?: string | React.ReactNode
@@ -15,43 +12,37 @@ interface PageHeaderProps {
 }
 
 export function PageHeader({ title, subtitle, action }: PageHeaderProps) {
-  const { setIsOpen } = useMenu()
-
   return (
-    <div className="border-b border-slate-200 bg-white">
-      <div className="px-4 md:px-8 py-4 md:py-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-        {/* Hamburger and Title */}
-        <div className="w-full md:w-auto flex items-start gap-4 md:gap-0">
-          <button
-            onClick={() => setIsOpen(true)}
-            className="md:hidden p-1 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded transition-colors flex-shrink-0 mt-1"
+    <div className="px-5 md:px-8 pt-7 pb-5 flex-shrink-0">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1
+            className="text-2xl md:text-3xl font-bold text-rail-900"
+            style={{ fontFamily: 'var(--font-syne), Syne, system-ui' }}
           >
-            <Menu className="w-6 h-6" />
-          </button>
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-950">
-              {title}
-            </h1>
-            {subtitle && (
-              <div className="mt-1 text-sm text-slate-600">{subtitle}</div>
-            )}
-          </div>
+            {title}
+          </h1>
+          {subtitle && (
+            <div className="mt-1 text-sm text-warm-500">{subtitle}</div>
+          )}
         </div>
+
         {action && (
           <button
             onClick={action.onClick}
             disabled={action.disabled}
-            className={`btn-minimal-primary inline-flex items-center gap-2 ${
+            className={`btn-minimal-primary flex-shrink-0 ${
               action.disabled ? 'opacity-50 cursor-not-allowed' : ''
             }`}
           >
-            {action.icon && <action.icon className={`w-4 h-4 ${action.disabled ? '' : ''}`} />}
+            {action.icon && <action.icon className="w-4 h-4" />}
             {action.label}
           </button>
         )}
       </div>
-      {/* Subtle track line */}
-      <div className="h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent"></div>
+
+      {/* Amber track accent */}
+      <div className="track-amber mt-5 opacity-60" />
     </div>
   )
 }
