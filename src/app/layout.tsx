@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Syne, DM_Sans } from 'next/font/google'
 import '@/globals.css'
 import AuthProvider from '@/components/AuthProvider'
+import { Toaster } from '@/components/ui/sonner'
 
 const syne = Syne({
   subsets: ['latin'],
@@ -33,6 +34,7 @@ export default function RootLayout({
         <AuthProvider>
           {children}
         </AuthProvider>
+        <Toaster />
       </body>
     </html>
   )
